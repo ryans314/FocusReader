@@ -1,0 +1,67 @@
+# Tasks Breakdown
+
+#### Tasks
+- [x] Template repo
+	- [x] Finish Prep
+	- [x] Be familiar with ctx tool/workflow
+		- `./ctx prompt design/path/file.md` to run a prompt, with the prompt in an H1
+		- Each file must start with an H1
+- [ ] Rework/improve Concepts
+	- [ ] Assess individual concepts for flaws, including:
+		- Non-comprehensive action sets
+		- Poorly defined state types
+		- Dependency on another concept's state or actions
+		- Conflated concerns between concepts
+	- [ ] Document any concept changes/issues in \[concept\]-design.md
+	- [ ] Assess application/syncs for flaws, including:
+		- Feasibility of the system
+		- Missing necessary syncs
+	- [ ] Document any resulting concept changes in \[concept\]-design.md
+	- [ ] Document any application-wide changes in application-design.md
+- [ ] Covert Concepts into Concept Specifications
+- [ ] Implement concept backend
+	- AI slop them into existence, as instructed
+- [ ] Develop tests for each concept
+	- [ ] Operational principle test
+	- [ ] 3-5 interesting scenarios, with each action hit at least once
+- [ ] Regular iteration over implementation + tests until tests are good and pass
+
+#### Deliverables
+1. Annotation Concept
+	- [ ] Spec file (markdown, specific notation)
+	- [ ] Implementation (file)
+	- [ ] Tests (file)
+	- [ ] Copy of console output showing test cases run successfully (markdown)
+	- [ ] Design file (markdown, note concept changes since A2 and issues)
+2. FocusStats Concept
+	- [ ] Spec file (markdown, specific notation)
+	- [ ] Implementation (file)
+	- [ ] Tests (file)
+	- [ ] Copy of console output showing test cases run successfully (markdown)
+	- [ ] Design file (markdown, note concept changes since A2 and issues)
+3. Library Concept
+	- [ ] Spec file (markdown, specific notation)
+	- [ ] Implementation (file)
+	- [ ] Tests (file)
+	- [ ] Copy of console output showing test cases run successfully (markdown)
+	- [ ] Design file (markdown, note concept changes since A2 and issues)
+4. Profile Concept
+	- [ ] Spec file (markdown, specific notation)
+	- [ ] Implementation (file)
+	- [ ] Tests (file)
+	- [ ] Copy of console output showing test cases run successfully (markdown)
+	- [ ] Design file (markdown, note concept changes since A2 and issues)
+5. TextSettings Concept
+	- [ ] Spec file (markdown, specific notation)
+	- [ ] Implementation (file)
+	- [ ] Tests (file)
+	- [ ] Copy of console output showing test cases run successfully (markdown)
+	- [ ] Design file (markdown, note concept changes since A2 and issues)
+6. Application as a whole
+	- [ ] Design file (markdown)
+		- [ ] Changes to whole application
+		- [ ] 5-10 "interesting moments" + explanation
+
+#### Notes:
+- Save "interesting moments" by using ./ctx save and making a note in [the journal](design/journal/journal.md)
+- 

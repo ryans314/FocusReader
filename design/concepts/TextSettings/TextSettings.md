@@ -8,17 +8,17 @@
 
 **state**  
 a set of TextSettings with:  
-&emsp;a font Font
-&emsp;a fontSize number  
-&emsp;a lineHeight number  
-&emsp;a bionicEnabled bool  
-&emsp;a locale User | Document
+- a font Font
+- a fontSize number  
+- a lineHeight number  
+- a bionicEnabled bool  
+- a locale User | Document
 
 **actions**  
 createSettings(font: Font, fontSize: Number, lineHeight: Number, bionicEnabled: bool, user: User): (settings: TextSettings)  
-&emsp;**requires** there is not already a TextSettings with user  
-&emsp;**effects** creates a TextSettings with fontSize, lineHeight, bionicEnabled, and locale=user
+- **requires** there is not already a TextSettings with user  
+- **effects** creates a TextSettings with fontSize, lineHeight, bionicEnabled, and locale=user
 
 editSettings(textSettings: TextSettings, font: Font, fontSize: Number, lineHeight: Number, bionicEnabled: bool): (settings: TextSettings)  
-&emsp;**requires** textSettings exists  
-&emsp;**effects** changes textSettings to have fontSize, lineHeight, and Number
+- **requires** textSettings exists  
+- **effects** changes textSettings to have fontSize, lineHeight, and Number
