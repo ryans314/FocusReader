@@ -7,12 +7,18 @@
 		- `./ctx prompt design/path/file.md` to run a prompt, with the prompt in an H1
 		- Each file must start with an H1
 - [ ] Rework/improve Concepts
-	- [ ] Assess individual concepts for flaws, including:
+	- [x] Assess individual concepts for flaws, including:
 		- Non-comprehensive action sets
 		- Poorly defined state types
 		- Dependency on another concept's state or actions
 		- Conflated concerns between concepts
-	- [ ] Document any concept changes/issues in \[concept\]-design.md
+		- Concepts:
+			- [x] Profile
+			- [x] Library
+			- [x] Annotations
+			- [x] TextSettings
+			- [x] FocusStats
+	- [x] Document any concept changes/issues in \[concept\]-design.md
 	- [ ] Assess application/syncs for flaws, including:
 		- Feasibility of the system
 		- Missing necessary syncs
@@ -50,7 +56,7 @@
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
-	- [ ] Design file (markdown, note concept changes since A2 and issues)
+	- [x] Design file (markdown, note concept changes since A2 and issues)
 5. TextSettings Concept
 	- [ ] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)

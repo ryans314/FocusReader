@@ -1,43 +1,240 @@
 # concept: Annotations
 
-**concept** Annotations \[Document\]
+[@concept-design-overview](/design/background/concept-design-overview.md) 
 
-**purpose** allow users to make and search through notes inside documents
+[@concept-specifications](/design/background/concept-specifications.md)
 
-**principle** When users read a document, they can make and view highlighting or text annotations in the document. Users can label annotations with tags. Users can also search for annotations in a document with specific keywords or about certain ideas.  
+[@concept-state](/design/background/detailed/concept-state.md)
+
+[@concept-rubric](/design/background/detailed/concept-rubric.md)
+
+**concept** Annotations \[User, Document, Location\]
+
+**purpose** allow users to create annotations within documents and search amongst their annotations
+
+**principle** When users read a document, they can create and view highlighting or text annotations in the document. Users can label annotations with tags. Users can also search for annotations in a document with specific keywords or about certain ideas.  
 
 **state**  
 a set of Annotations with:  
+- a creator User
 - a document Document  
-- a color Color  
-- a content String  
+- an optional color String  
+- an optional content String  
 - a location Location  
-- a set of Tags
+- a tags set of Tags
 
 a set of Tags with:  
+- a creator User
 - a title String
+
+a set of Documents with:
+- an annotations set of Annotations
+- a creator User
 
 **actions**  
 
-createTag(title: String): (tag: Tag)  
-- **requires** a tag with title does not already exist  
+createTag(creator: User, title: String): (tag: Tag)  
+- **requires** a tag with user and title does not already exist  
 - **effects** creates a tag with title
 
-createAnnotation(document: Document, color: Color, content: String, location: Location, tags: List\[Tag\]): (annotation: Annotation)  
-- **requires** document exists, and location is a valid location in the document  
-- **effects** creates and adds annotation with document, color, content, location, and tags to the set of Annotations
+createAnnotation(creator: User, document: Document, color: String, content: String, location: Location, tags: List\[Tag\]): (annotation: Annotation)  
+- **requires** 
+	- document exists, and has creator=creator
+	- location exists and is well-defined
+	- color is either a valid HTML color, or omitted. At least one of color and content must not be omitted
+- **effects** 
+	- creates and adds annotation with creator, document, color, content, location, and tags to the set of Annotations.
+	- Adds annotation to the document's set of annotations
 
-deleteAnnotation(annotation: Annotation)  
-- **requires** annotation exists  
-- **effects** removes annotation from the set of Annoations
- 
-search(document: Document, criteria: String): (annotations: List\[Annotations\\])  
+deleteAnnotation(user: User, annotation: Annotation)  
+- **requires** annotation exists and has creator=user
+- **effects** removes annotation from all sets of Annotations
+
+updateAnnotation(user: User, annotation: Annotation, newColor: String, newContent: String, newLocation: Location, newTags: List\[Tag\]): (annotation: Annotation)  
+- **requires** annotation has creator=user, newColor (if provided) is a valid HTML color. Any of newColor, newContent, newLocation, and newTags may be omitted.
+- **effects** modifies annotation to have color=newColor, content=newContent, location=newLocation, tags=newTags (for each attribute that is not omitted)
+
+search(user: User, document: Document, criteria: String): (annotations: List\[Annotations\\])  
 - **requires** document exists  
-- **effects** returns a list of annotations in the document that have content or tags matching criteria
+- **effects** returns a list of annotations with creator=user in the document that have content or tags matching criteria
 
-searchLLM(document: Document, description: String, llm: GeminiLLM): (annotations: List\[Annotations\\])  
+searchLLM(user: User, document: Document, description: String, llm: GeminiLLM): (annotations: List\[Annotations\])  
 - **requires** document and llm exist  
-- **effects** uses llm to identify and return annotations in the document that fit the given description
+- **effects** uses llm to identify and return annotations with creator=user in the document that fit the given description
 
 
-**notes** Location is some representation of location in a file, not specified in the concept but assumed to exist natively in python/file representations
+**notes:** 
+- Location is a generic representation of a location within a document, Document is a generic representation of a document, and color is a generic representation of a color
+- I'm not sure exactly how it would work, but depending on the generic Document passed in, there would be an implied location representation associated with it. For example, .epub files (using a library) can represent text location as an index, whereas pdfs treat the entire document as an image (x-y plane for location).  
+
+# Prompt: looking at the concept-design-overview, concept-specifications, concept-state, and concept-rubric, please evaluate and advise me on this new and improved annotations concept. You can ignore the difference between objects and object identifiers (e.g. "user" vs "userId). 
+# response:
+
+This is a well-structured and thoughtfully designed concept, demonstrating a good understanding of the principles of Concept Design. The use of generic type parameters (`User`, `Document`, `Location`) is particularly strong for ensuring independence and reusability.
+
+Here's an evaluation and advice based on the provided documentation and rubric:
+
+---
+
+### **Evaluation of Annotations Concept**
+
+**1. Concept Name: `Annotations [User, Document, Location]`**
+*   **Evaluation:** Excellent. The name is descriptive and appropriately specific. The type parameters are well-chosen, clearly indicating the external entities this concept operates on polymorphically. The `Location` parameter effectively addresses the variability of location representation across different document types.
+
+**2. Purpose: `allow users to create annotations within documents and search amongst their annotations`**
+*   **Evaluation (against Rubric):**
+    *   **Need-focused**: This purpose describes *what* the concept does (create, search) rather than *why* a user needs it or the *value* it provides. It falls into the rubric's "partial description of behavior" trap. Why do users want to create and search annotations? To remember, to organize thoughts, to study, to collaborate, to highlight key information for later retrieval.
+    *   **Specific**: It is specific to annotations.
+    *   **Evaluable**: It's somewhat evaluable, but without a clear need, evaluating its success in fulfilling that need is difficult.
+    *   **Application-independent**: Yes, it's generic.
+*   **Advice:** Rephrase the purpose to focus on the *user's need* or the *benefit/value* delivered.
+    *   **Suggestion:** "Enable users to capture, organize, and quickly retrieve personal insights, highlights, or comments directly within documents, thereby enhancing understanding, recall, and knowledge synthesis."
+
+**3. Operational Principle:**
+`When users read a document, they can create and view highlighting or text annotations in the document. Users can label annotations with tags. Users can also search for annotations in a document with specific keywords or about certain ideas.`
+*   **Evaluation (against Rubric):**
+    *   **Goal focused**: It enumerates capabilities but doesn't clearly demonstrate *how* these capabilities fulfill a compelling purpose. It's more of a feature list than a "story."
+    *   **Differentiating**: The inclusion of "tags" and "searchLLM" (though `searchLLM` is an action, not explicitly in the principle narrative) provides differentiation. However, the narrative itself doesn't highlight this differentiation strongly within a scenario.
+    *   **Archetypal**: It's not quite an archetypal *scenario* (a sequence of "if X, then Y" steps). It reads more like a summary of features.
+    *   **Covers full lifecycle**: It covers creation and search, but the "story" aspect is missing to show the full benefit.
+*   **Advice:** Transform this into a concise, illustrative *scenario* that demonstrates the core value of the concept, especially highlighting its unique aspects (like tagging or the LLM search if that's a key differentiator).
+    *   **Suggestion:** "Imagine a student studying a digital textbook. They can *highlight* important passages (createAnnotation with color) and add detailed personal *notes* (createAnnotation with content) to paragraphs. To organize their study, they can *create tags* like 'exam prep' or 'research idea' (createTag) and apply them to relevant annotations. Later, when preparing for an exam, they can easily *search* all their 'exam prep' annotations related to a specific chapter, or even use an LLM to *identify annotations* related to broader themes like 'historical context' (searchLLM), thereby quickly retrieving and synthesizing their recorded insights."
+
+**4. State**
+```
+a set of Annotations with:
+* a creator User
+* a document Document
+* a color String
+* a content String
+* a location Location
+* a tags set of Tags
+
+a set of Tags with:
+* a creator User
+* a title String
+```
+*   **Evaluation (against Rubric & SSF):**
+    *   **State clearly defines distinct components**: Yes, `Annotations` and `Tags` are clearly defined with their respective fields.
+    *   **State covers all objects needed**: All fields seem relevant and sufficient to support the described actions.
+    *   **Indexed appropriately**: The fields imply natural keys (e.g., `creator` + `title` for `Tag`; `creator`, `document`, `location` as part of an `Annotation`'s context).
+    *   **No unnecessary properties**: All fields appear to serve a purpose for the concept's functionality.
+    *   **Abstract**: The use of `User`, `Document`, `Location` as generic types is excellent for abstraction.
+    *   **No needless redundancies**: The structure seems lean and appropriate.
+    *   **Sufficiently rich**: Yes, it supports the described behavior effectively.
+    *   **SSF Conformity**: The use of bullet points in the `with:` clause is a slight deviation from the SSF grammar's single-line indented field declarations, but the intent is clear. The `tags set of Tags` correctly defines a many-to-many relationship. The `creator` on `Tags` correctly scopes them to a user, aligning with "their annotations."
+*   **Advice:** Minimal. For strict SSF adherence, list fields on separate indented lines without bullets. The current structure is clear enough for concept design, but something to note for formal SSF parsing.
+
+**5. Actions**
+
+*   **`createTag(creator: User, title: String): (tag: Tag)`**
+    *   **Evaluation:** Good. The `requires` condition enforces uniqueness, which is a sensible design choice for user-defined tags.
+*   **`createAnnotation(creator: User, document: Document, color: String, content: String, location: Location, tags: List[Tag]): (annotation: Annotation)`**
+    *   **Evaluation:**
+        *   **Type Consistency:** The `tags` parameter is `List[Tag]`, but the state (`a tags set of Tags`) implies an unordered collection. For consistency and clarity, the parameter type should be `Set[Tag]`.
+        *   **Completeness:** What if an annotation is just a highlight (no `content`) or just a note (no `color`)? The current design assumes both are `String`, so empty strings would signify absence, which is a valid approach. If optionality is desired, it should be reflected in the state (e.g., `an optional color String`) and the action.
+        *   **Requires:** The `tags` passed in should also be required to exist if they are references to existing `Tag` objects.
+*   **`deleteAnnotation(user: User, annotation: Annotation)`**
+    *   **Evaluation:** Good. The `requires` condition correctly enforces ownership and prevents unauthorized deletion.
+*   **`search(user: User, document: Document, criteria: String): (annotations: List[Annotations])`**
+    *   **Evaluation:**
+        *   **Result Type:** The return type `List[Annotations]` should be `List[Annotation]` (singular).
+        *   **Filtering:** Filtering by `creator=user` aligns with the purpose of "their annotations."
+*   **`searchLLM(user: User, document: Document, description: String, llm: GeminiLLM): (annotations: List[Annotations])`**
+    *   **Evaluation:**
+        *   **Result Type:** Again, `List[Annotations]` should be `List[Annotation]`.
+        *   **Independence (LLM Type):** `GeminiLLM` is a concrete LLM provider. For maximum concept independence and reusability, `LLM` should ideally be a *type parameter* of the `Annotations` concept itself (e.g., `concept Annotations [User, Document, Location, LLM]`). Then, the action parameter `llm` would be of type `LLM`. This prevents the `Annotations` concept from being tied to a specific LLM implementation.
+*   **General Actions Evaluation (against Rubric):**
+    *   **Completeness (Missing Updates):** A notable omission is the lack of `update` actions for `Annotations` and `Tags`. Users will almost certainly want to modify the content, color, location, or tags of an annotation, or correct the title of a tag. Without these, the concept is not "complete" with respect to the full lifecycle of its managed objects.
+        *   *Rubric violation:* "A state component is assumed to be mutable, but no action allows its mutation."
+    *   **Setup actions**: `createTag` is good.
+    *   **Undo/compensating**: `deleteAnnotation` serves this purpose.
+    *   **No getters**: `search` and `searchLLM` are proper query actions, not simple getters.
+    *   **Preconditions**: Generally well-defined.
+    *   **Only refer to this concept's state**: Yes, actions refer only to `Annotation` and `Tag` state components.
+
+*   **Advice for Actions:**
+    *   **Add Update Actions:** Introduce `updateAnnotation` (e.g., `updateAnnotation(user: User, annotation: Annotation, newColor: String, newContent: String, newLocation: Location, newTags: Set[Tag])`) and `updateTag` (e.g., `updateTag(user: User, tag: Tag, newTitle: String)`).
+    *   **Type Parameter for LLM:** Change the concept signature to include `LLM` as a type parameter: `concept Annotations [User, Document, Location, LLM]`. Then, `searchLLM` should accept `llm: LLM`.
+    *   **Type Consistency:** Use `Set[Tag]` for the `tags` parameter in `createAnnotation`.
+    *   **Result Type Fix:** Correct `List[Annotations]` to `List[Annotation]` in `search` and `searchLLM`.
+    *   **`createAnnotation` requires**: Add that `tags` must exist.
+
+**6. Overall Independence, Completeness, Separation of Concerns**
+
+*   **Independence:** Very strong, especially due to generic type parameters. The only minor point is the `GeminiLLM` type, which can be improved by making `LLM` a generic parameter.
+*   **Completeness:** The absence of update actions for annotations and tags is the main gap here. Addressing this will significantly improve completeness.
+*   **Separation of Concerns:** Excellent. The concept is tightly focused on annotation functionality and does not conflate concerns like document storage, user profiles, or a general-purpose tagging system (as the `Tags` here are clearly specific to annotations within this concept, scoped by `creator`).
+
+---
+
+### **Summary of Key Recommendations:**
+
+1.  **Refine Purpose:** Make it clearly state the *value* or *user need*.
+2.  **Refine Principle:** Convert to a compelling, archetypal *scenario* that demonstrates the concept's value proposition, including its unique features.
+3.  **Add Update Actions:** Implement `updateAnnotation` and `updateTag` actions for full lifecycle management.
+4.  **Enhance LLM Independence:** Make `LLM` a generic type parameter for the concept to decouple it from specific LLM providers.
+5.  **Fix Type Inconsistencies:** Correct `List[Tag]` to `Set[Tag]` in `createAnnotation` and `List[Annotations]` to `List[Annotation]` in search return types.
+
+By addressing these points, your `Annotations` concept will become even more robust, reusable, and aligned with the principles of Concept Design.
+
+# Prompt: Awesome, thanks! How do I indicate in the action that a parameter is optional (e.g. for an updateAnnotation action)?
+# response:
+
+That's an excellent and very practical question, and it highlights a common design pattern in APIs!
+
+The Concept Design specification language, as described, doesn't have an explicit `optional` keyword for action parameters within the signature itself (e.g., `param: optional String`). However, it gives us a crucial clue:
+
+> "When actions are implemented in TypeScript code, each action is represented by a method that takes a **dictionary object as input** and returns a dictionary object as output. The fields of the dictionary objects are the input argument and result names."
+
+This implies that the *dictionary object* itself can contain optional fields. In a specification, we represent these as individual parameters, and the mechanism for making them "optional" then comes from how the `effects` clause is written and how the calling mechanism (the syncs, or direct API calls) can omit values.
+
+Here's the recommended way to indicate optional parameters for your `updateAnnotation` action, blending clarity for the specification with its intended implementation:
+
+---
+
+### **1. Use a standard informal notation (like `?`) for clarity in the signature**
+
+While not a formal grammar rule in the provided text, using `?` (as in TypeScript) or explicitly writing `optional` is a widely understood convention for indicating optional parameters in API specifications. This clearly communicates the intent.
+
+### **2. Explicitly describe the conditional effects**
+
+The `effects` clause is where you define the behavior. You must explicitly state that a state component is only updated *if* the corresponding optional parameter is provided.
+
+### **3. Add a clarifying note (optional but good practice)**
+
+If ambiguity might arise, a note can explain how "optional" parameters are handled (e.g., that `null` or `undefined` input for an optional parameter means "no change").
+
+---
+
+Let's apply this to your `updateAnnotation` action:
+
+**Revised `updateAnnotation` Action:**
+
+```
+updateAnnotation(
+    user: User,
+    annotation: Annotation,
+    color?: String,         // Optional: if provided, updates the annotation's color
+    content?: String,       // Optional: if provided, updates the annotation's content
+    location?: Location,    // Optional: if provided, updates the annotation's location
+    tags?: Set[Tag]         // Optional: if provided, replaces the annotation's tags for this annotation
+)
+    **requires** annotation exists AND annotation's creator is user
+    **effects**
+        IF color IS PROVIDED THEN annotation.color := color
+        IF content IS PROVIDED THEN annotation.content := content
+        IF location IS PROVIDED THEN annotation.location := location
+        IF tags IS PROVIDED THEN annotation.tags := tags
+```
+
+**Explanation for this approach:**
+
+*   **`color?: String` (and similar for others):** The `?` clearly indicates that these parameters are optional. When implementing in TypeScript, this would directly translate to `color?: string` in the input dictionary interface.
+*   **`IF ... IS PROVIDED THEN ...` in `effects`:** This explicitly states the conditional logic. If the `color` parameter is present in the input dictionary (and not `undefined` or `null`, if `null` isn't meant to clear the field), then the annotation's color is updated. Otherwise, it remains unchanged.
+
+    *   **Important Note on `null` vs. `undefined`**: If a state field (e.g., `color`) is defined as `String` (implying non-null), then providing `null` for `color` as an optional parameter would typically be an error unless specifically defined to clear the field. For simplicity in concept design, `IS PROVIDED` usually means "a non-null, valid value for the type was supplied." If you had `an optional color String` in your state, then `null` as input could explicitly mean "remove the color." Given your current state, `color: String` implies it must always have a string value.
+
+---
+
+This approach is robust, clear, and aligns well with the practical implementation hints provided in the Concept Design documentation.
