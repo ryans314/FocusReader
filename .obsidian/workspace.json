@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/concepts/Library/design.md",
+                "file": "design/concepts/Annotations/Annotations.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "design"
+              "title": "Annotations"
             }
           },
           {
@@ -64,7 +64,7 @@
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -212,43 +212,43 @@
       "bases:Create new base": false
     }
   },
-  "active": "62d7d7ae8533412b",
+  "active": "135e6cb1747edd89",
   "lastOpenFiles": [
-    "design/journal/journal.md",
-    "design/journal/disorganized-thoughts.md",
-    "design/background/examples/specification-notation.md",
-    "design/journal/assignment-preparation.md",
-    "design/background/assignment-2-concepts.md",
-    "design/concepts/Annotations/Annotations.md",
-    "design/concepts/Library/design.md",
     "design/concepts/FocusStats/FocusStats.md",
-    "context/design/concepts/FocusStats/FocusStats.md/20251020_074304.5e89d349.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/response.bac1ce13.md",
-    "context/design/concepts/FocusStats/FocusStats.md/20251020_074211.b3c96a19.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/Prompt.750688c9.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/_.849d8a25.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/Concept State.28ab7cd0.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/_.fa3ad648.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/_.3eb68380.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps/concept.9faaaef0.md",
-    "context/design/concepts/FocusStats/FocusStats.md/steps",
-    "context/design/concepts/FocusStats/FocusStats.md",
-    "context/design/concepts/FocusStats",
-    "design/concepts/Library/Library.md",
+    "design/concepts/FocusStats/implementation.md",
     "design/concepts/FocusStats/design.md",
+    "design/concepts/Library/Library.md",
+    "design/concepts/Profile/Profile.md",
     "design/concepts/TextSettings/TextSettings.md",
-    "context/design/concepts/TextSettings/TextSettings.md/20251020_071940.9e4d54a2.md",
-    "context/design/concepts/TextSettings/TextSettings.md/steps/response.ae12b777.md",
-    "context/design/concepts/TextSettings/TextSettings.md/20251020_071825.02a48eb2.md",
-    "context/design/concepts/TextSettings/TextSettings.md/steps/Prompt.665272b6.md",
-    "context/design/concepts/TextSettings/TextSettings.md/steps/_.0e7e4c84.md",
-    "context/design/concepts/TextSettings/TextSettings.md/steps",
-    "context/design/concepts/TextSettings",
-    "context/design/concepts/Annotations/Annotations.md/steps",
-    "context/design/concepts/Annotations",
-    "context/design/concepts/Library/Library.md/steps",
-    "context/design/concepts/Library",
-    "src/concept_server.ts",
-    "design/tools"
+    "design/concepts/Profile/design.md",
+    "context/design/concepts/Library/Library.md/20251020_211534.b74d9e46.md",
+    "context/design/concepts/Library/Library.md/steps/response.627272d8.md",
+    "context/design/concepts/Library/Library.md/20251020_211524.32b87ca3.md",
+    "context/design/concepts/Library/Library.md/steps/Prompt.380d65f1.md",
+    "context/design/concepts/Library/Library.md/steps/_.c6bbf553.md",
+    "context/design/concepts/Library/Library.md/steps/response.ae12b777.md",
+    "context/design/concepts/Library/Library.md/steps/Prompt.665272b6.md",
+    "context/design/concepts/Library/Library.md/steps/_.7204d895.md",
+    "context/design/concepts/Library/Library.md/steps/concept.34c4d35c.md",
+    "design/concepts/Annotations/Annotations.md",
+    "design/journal/assignment-preparation.md",
+    "design/background/examples/specification-notation.md",
+    "context/design/concepts/FocusStats/FocusStats.md/20251020_192804.283fcdb5.md",
+    "context/design/concepts/FocusStats/FocusStats.md/steps/response.bd47371b.md",
+    "context/design/concepts/FocusStats/FocusStats.md/20251020_192733.e1997185.md",
+    "context/design/concepts/FocusStats/FocusStats.md/20251020_192711.dce85a98.md",
+    "context/design/concepts/FocusStats/FocusStats.md/20251020_192701.1cbe0a29.md",
+    "context/design/concepts/FocusStats/FocusStats.md/steps/Prompt.b6ca60ea.md",
+    "context/design/concepts/FocusStats/FocusStats.md/20251020_192543.8de3b9d2.md",
+    "src/concepts/TextSettings/TextSettings.test.ts",
+    "src/concepts/TextSettings/TextSettings.ts",
+    "src/concepts/TextSettings/TextSettings.spec",
+    "src/concepts/Profile/Profile.test.ts",
+    "src/concepts/Profile/Profile.ts",
+    "src/concepts/Profile/Profile.spec",
+    "src/concepts/Library/Library.test.ts",
+    "src/concepts/Library/Library.ts",
+    "src/concepts/Library/Library.spec",
+    "src/concepts/FocusStats/FocusStats.spec"
   ]
 }

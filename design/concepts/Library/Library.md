@@ -11,6 +11,8 @@
 
 [@TextSettings](/design/concepts/TextSettings/TextSettings.md)
 
+[@specification-notation](/design/background/examples/specification-notation.md)
+
 **concept** Library \[User\]
 
 **purpose** allow users to add, remove, view, and access their uploaded documents
@@ -56,6 +58,3 @@ closeDocument(user: User, document: Document): (document: Document)
 - Invariant: all documents have unique names
 - Each document is in and belongs to exactly 1 library
 - epubContent is represented as a BinaryData rather than its own complex since .epub files will be interacted with via a library that treats them as their own data type
-
-
-

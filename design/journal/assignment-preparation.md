@@ -70,4 +70,3 @@
 
 #### Notes:
 - Save "interesting moments" by using ./ctx save and making a note in [the journal](design/journal/journal.md)
-- 
