@@ -5,7 +5,7 @@ import {
   assertStrictEquals,
 } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
-import FocusStatsConcept from "./_FocusStatsConcept.ts";
+import FocusStatsConcept from "./FocusStatsConcept.ts";
 import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 

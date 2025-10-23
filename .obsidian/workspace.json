@@ -96,7 +96,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "query",
+                "query": "\"deno task\"",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -117,7 +117,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -212,10 +213,10 @@
       "bases:Create new base": false
     }
   },
-  "active": "135e6cb1747edd89",
+  "active": "91b6b6a68ddda469",
   "lastOpenFiles": [
-    "src/concepts/FocusStats/_FocusStatsConcept.ts",
     "src/concepts/FocusStats/FocusStatsConcept.ts",
+    "src/concepts/FocusStats/_FocusStatsConcept.ts",
     "context/design/concepts/FocusStats/implementation.md/steps/file.79d9f402.md",
     "context/design/concepts/FocusStats/implementation.md/steps/Implement.96859878.md",
     "context/design/concepts/FocusStats/implementation.md/steps/_.1bf7fdfc.md",
