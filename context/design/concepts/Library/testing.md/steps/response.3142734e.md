@@ -1,13 +1,8 @@
-[@concept-design-overview](../../background/concept-design-overview.md)
-
-[@concept-specifications](../../background/concept-specifications.md)
-
-[@Library](Library.md)
-
-[@implementing-concepts](../../background/implementing-concepts.md)
-
-# implement: Library
-
+---
+timestamp: 'Thu Oct 23 2025 02:21:46 GMT-0400 (Eastern Daylight Time)'
+parent: '[[..\20251023_022146.3aedde38.md]]'
+content_id: 3142734e12d58a5ff5487b1d395a0b0faf7d12ea9adaa2da878635d7a61b862d
+---
 
 # response:
 

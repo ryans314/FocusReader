@@ -1,4 +1,4 @@
-# concept: Annotations
+# concept: Annotation
 
 [@concept-design-overview](/design/background/concept-design-overview.md) 
 
@@ -10,7 +10,7 @@
 
 [@specification-notation](/design/background/examples/specification-notation.md)
 
-**concept** Annotations \[User, Document, Location\]
+**concept** Annotation \[User, Document, Location\]
 
 **purpose** allow users to create annotations within documents and search amongst their annotations
 

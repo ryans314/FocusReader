@@ -24,7 +24,7 @@
 		- Missing necessary syncs
 	- [ ] Document any resulting concept changes in \[concept\]-design.md
 	- [ ] Document any application-wide changes in application-design.md
-- [ ] Covert Concepts into Concept Specifications
+- [x] Covert Concepts into Concept Specifications
 - [ ] Implement concept backend
 	- AI slop them into existence, as instructed
 - [ ] Develop tests for each concept
@@ -34,35 +34,35 @@
 
 #### Deliverables
 1. Annotation Concept
-	- [ ] Spec file (markdown, specific notation)
+	- [x] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
-	- [ ] Design file (markdown, note concept changes since A2 and issues)
+	- [x] Design file (markdown, note concept changes since A2 and issues)
 2. FocusStats Concept
-	- [ ] Spec file (markdown, specific notation)
+	- [x] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
-	- [ ] Design file (markdown, note concept changes since A2 and issues)
+	- [x] Design file (markdown, note concept changes since A2 and issues)
 3. Library Concept
-	- [ ] Spec file (markdown, specific notation)
+	- [x] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
-	- [ ] Design file (markdown, note concept changes since A2 and issues)
+	- [x] Design file (markdown, note concept changes since A2 and issues)
 4. Profile Concept
-	- [ ] Spec file (markdown, specific notation)
+	- [x] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
 	- [x] Design file (markdown, note concept changes since A2 and issues)
 5. TextSettings Concept
-	- [ ] Spec file (markdown, specific notation)
+	- [x] Spec file (markdown, specific notation)
 	- [ ] Implementation (file)
 	- [ ] Tests (file)
 	- [ ] Copy of console output showing test cases run successfully (markdown)
-	- [ ] Design file (markdown, note concept changes since A2 and issues)
+	- [x] Design file (markdown, note concept changes since A2 and issues)
 6. Application as a whole
 	- [ ] Design file (markdown)
 		- [ ] Changes to whole application
