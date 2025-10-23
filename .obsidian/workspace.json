@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/concepts/Annotation/testing.md",
+                "file": "design/concepts/TextSettings/test output.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "testing"
+              "title": "test output"
             }
           },
           {
@@ -55,16 +55,16 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/journal/journal.md",
+                "file": "design/journal/Journal.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "journal"
+              "title": "Journal"
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -96,7 +96,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "readingStats",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -212,43 +212,43 @@
       "bases:Create new base": false
     }
   },
-  "active": "135e6cb1747edd89",
+  "active": "9b42b4503c7d88ad",
   "lastOpenFiles": [
-    "context/design/concepts/Annotation/testing.md/20251023_061414.b332f3cc.md",
-    "context/design/concepts/Annotation/testing.md/steps/file.a38c1452.md",
-    "context/design/concepts/Annotation/testing.md/steps/file.8ab0d5e3.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.ca9dcda7.md",
-    "context/design/concepts/Annotation/testing.md/20251023_061252.62be21bb.md",
-    "context/design/concepts/Annotation/testing.md/steps/Prompt.689d711b.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060853.b7c519da.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.ed1e7cbd.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060755.e7a91dbf.md",
-    "context/design/concepts/Annotation/testing.md/steps/Prompt.1bb5802c.md",
-    "design/journal/journal.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060420.f3ec14b0.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.d86c0cf6.md",
-    "design/concepts/Annotation/testing.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060333.195312ea.md",
-    "context/design/concepts/Annotation/testing.md/steps/Prompt.ac22e2c1.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060144.4a965d45.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.9547b225.md",
-    "context/design/concepts/Annotation/testing.md/20251023_060048.dc393139.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.9d81a603.md",
-    "context/design/concepts/Annotation/testing.md/steps/Prompt.ea783e42.md",
-    "context/design/concepts/Annotation/testing.md/steps/response.d28decd6.md",
-    "context/design/concepts/Annotation/testing.md/steps/Implement.c11650be.md",
-    "context/design/concepts/Annotation/testing.md/steps/_.ca974297.md",
-    "design/concepts/Annotation/implementation.md",
-    "context/design/concepts/Annotation/implementation.md/20251023_055907.6641a72d.md",
-    "context/design/concepts/Annotation/testing.md/steps",
+    "design/concepts/TextSettings/test output.md",
+    "design/concepts/TextSettings/testing.md",
+    "context/design/concepts/TextSettings/testing.md/20251023_070539.5e916e58.md",
+    "context/design/concepts/TextSettings/testing.md/steps/file.6c37d9cf.md",
+    "context/design/concepts/TextSettings/testing.md/steps/response.656a006f.md",
+    "design/concepts/Profile/test output.md",
+    "context/design/concepts/TextSettings/testing.md/20251023_070455.7c40d3a9.md",
+    "context/design/concepts/TextSettings/testing.md/steps/Prompt.f2ef0b46.md",
+    "design/concepts/TextSettings/TextSettings.md",
+    "design/concepts/Profile/testing.md",
+    "design/concepts/Profile/implementation.md",
+    "design/concepts/Library/test output.md",
+    "design/concepts/Library/testing.md",
+    "context/design/concepts/Library/testing.md/20251023_070229.f33b454a.md",
+    "context/design/concepts/Library/testing.md/steps/response.8e765aca.md",
+    "context/design/concepts/Library/testing.md/20251023_070124.ca87debf.md",
+    "context/design/concepts/Library/testing.md/steps/Prompt.816c4107.md",
+    "context/design/concepts/Profile/testing.md/20251023_065612.92528fb3.md",
+    "context/design/concepts/Profile/testing.md/steps/response.74cb19ad.md",
+    "context/design/concepts/Profile/testing.md/20251023_065540.a4cab609.md",
+    "context/design/concepts/Profile/testing.md/steps/Prompt.f2ef0b46.md",
+    "context/design/concepts/Library/testing.md/20251023_065517.63110046.md",
+    "context/design/concepts/Library/testing.md/steps/response.bbe9637f.md",
+    "context/design/concepts/Library/testing.md/20251023_065355.2ab83b93.md",
+    "context/design/concepts/Library/testing.md/steps/Prompt.0ca597d3.md",
+    "context/design/concepts/Library/testing.md/steps/file.79d9f402.md",
     "src/concepts/FocusStats/FocusStatsConcept.ts",
-    "src/concepts/FocusStats/_FocusStatsConcept.ts",
-    "context/design/concepts/FocusStats/testing.md/steps",
-    "context/design/concepts/FocusStats/implementation.md/steps",
-    "context/design/concepts/TextSettings/testing.md/steps",
-    "context/design/concepts/TextSettings/implementation.md/steps",
-    "context/design/concepts/Profile/testing.md/steps",
+    "src/concepts/FocusStats/TempFocusStatsConcept.ts",
     "src/concepts/FocusStats/focusStatsConcept.ts",
-    "src/concepts/FocusStats/FocusStatsConcept.test.ts"
+    "src/concepts/FocusStats/FocusStatsConcept.test.ts",
+    "src/concepts/FocusStats",
+    "src/concepts/ReadingStats/FocusStatsConcept.test.ts",
+    "src/concepts/ReadingStats/FocusStatsConcept.ts",
+    "src/concepts/ReadingStats/ReadingStatsConcept.ts",
+    "src/concepts/ReadingStats/ReadingStatsConcept.test.ts",
+    "src/concepts/ReadingStats"
   ]
 }

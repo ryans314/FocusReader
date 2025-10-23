@@ -30,3 +30,18 @@
 		- Even after telling it that it may be wrong, linking to the appropriate deno documentation, it insisted that it was right. 
 	- Why it's interesting
 		- Very firm hallucination, usually after telling it to double check, providing direct evidence of it's incorrectness, the llm "realizes" that it's wrong, and adapts to what I say. 
+5. Applying bug fixes broadly
+	- [Context]()
+	- What happened:
+		- There were many instances of me attempting to generate a test suite, and the LLM having issues with type checking. For example calling obj.message, when obj has type { message: String } | { error: String }
+		- However, when I gave the LLM an example of the bug and explained the issue, it not only fixed the bug on the same line, or even bugs with the same variable, but it would fix all instances of that type of bug
+	- Why it's interesting
+		- Applying conceptual fixes broadly, rather than just fixing specific given instances of a bug, is something that I associate with a high level of skill/thinking, since it requires abstracting the problem and identifying other occurrences of it that may not be obvious. I'm surprised the llm did it so well. 
+
+## Application Changes
+- Removed many features:
+	- Bionic Reading - removed because it seems difficult to implement, and time is a factor. Also studies show little effect on focus or reading speed, so may not actually be beneficial in the first place
+	- Removed ai augmented search - also done because of time. I'd like to add this back in at some point, but depends on how much time I have to work on the project.
+- Limited application to Ebooks (.epub)
+	- A lot of the application will rely on making changes to text, and it's much, much easier to do with epubs than with pdfs. Frequently, PDFs will essentially be images, with no actual documentation of text. Epubs however have the information about text built in, and are easily able to identify text location and modulate elements of the text (e.g. color, font size, font, etc)
+	- 

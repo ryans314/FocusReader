@@ -93,11 +93,13 @@ Deno.test("TextSettings Concept Tests Suite", {
       result,
       "Expected successful creation of user settings.",
     );
+    console.log("    ✅ Action returned successfully.");
     assertExists(
       result.settings,
       "Settings ID should be returned on successful creation.",
     );
-    const settingsId = result.settings; // settingsId is now correctly typed as ID
+    console.log("    ✅ Settings ID exists in result.");
+    const settingsId = result.settings;
 
     const userDefaultsResult = await textSettingsConcept
       ._getUserDefaultSettings({ user });
@@ -108,31 +110,37 @@ Deno.test("TextSettings Concept Tests Suite", {
       userDefaultsResult,
       "Expected successful retrieval of user defaults.",
     );
+    console.log("    ✅ User defaults query returned successfully.");
     assertEquals(
       userDefaultsResult.length,
       1,
       "There should be one default setting for the user.",
     );
+    console.log("    ✅ Correct number of default settings found.");
     assertEquals(
       userDefaultsResult[0].settings._id,
       settingsId,
       "The linked settings ID should match.",
     );
+    console.log("    ✅ Linked settings ID matches.");
     assertEquals(
       userDefaultsResult[0].settings.font,
       font,
       "Font should match.",
     );
+    console.log("    ✅ Font matches.");
     assertEquals(
       userDefaultsResult[0].settings.fontSize,
       fontSize,
       "Font size should match.",
     );
+    console.log("    ✅ Font size matches.");
     assertEquals(
       userDefaultsResult[0].settings.lineHeight,
       lineHeight,
       "Line height should match.",
     );
+    console.log("    ✅ Line height matches.");
   });
 
   await test.step("Action: createUserSettings - Duplicate default settings for user", async () => {
@@ -170,13 +178,16 @@ Deno.test("TextSettings Concept Tests Suite", {
 
     if (!isError(result)) {
       throw new Error(
-        "Expected an error for duplicate default settings, but got success.",
+        "❌ Expected an error for duplicate default settings, but got success.",
       );
     }
     assertEquals(
       result.error,
       `User ${user} already has default text settings.`,
       "Error message should indicate duplicate default.",
+    );
+    console.log(
+      "    ✅ Expected error returned for duplicate default settings.",
     );
   });
 
@@ -226,7 +237,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       );
       if (!isError(result)) {
         throw new Error(
-          `Expected an error for invalid input, but got success for: ${
+          `❌ Expected an error for invalid input, but got success for: ${
             JSON.stringify(tc)
           }`,
         );
@@ -236,6 +247,7 @@ Deno.test("TextSettings Concept Tests Suite", {
         tc.expectedError,
         `Error message should match for: ${tc.expectedError}`,
       );
+      console.log(`    ✅ Expected error '${tc.expectedError}' returned.`);
     }
   });
 
@@ -270,10 +282,12 @@ Deno.test("TextSettings Concept Tests Suite", {
       result,
       "Expected successful creation of document settings.",
     );
+    console.log("    ✅ Action returned successfully.");
     assertExists(
       result.settings,
       "Settings ID should be returned on successful creation.",
     );
+    console.log("    ✅ Settings ID exists in result.");
     const settingsId = result.settings;
 
     const docCurrentsResult = await textSettingsConcept
@@ -285,31 +299,39 @@ Deno.test("TextSettings Concept Tests Suite", {
       docCurrentsResult,
       "Expected successful retrieval of document current settings.",
     );
+    console.log(
+      "    ✅ Document current settings query returned successfully.",
+    );
     assertEquals(
       docCurrentsResult.length,
       1,
       "There should be one current setting for the document.",
     );
+    console.log("    ✅ Correct number of current settings found.");
     assertEquals(
       docCurrentsResult[0].settings._id,
       settingsId,
       "The linked settings ID should match.",
     );
+    console.log("    ✅ Linked settings ID matches.");
     assertEquals(
       docCurrentsResult[0].settings.font,
       font,
       "Font should match.",
     );
+    console.log("    ✅ Font matches.");
     assertEquals(
       docCurrentsResult[0].settings.fontSize,
       fontSize,
       "Font size should match.",
     );
+    console.log("    ✅ Font size matches.");
     assertEquals(
       docCurrentsResult[0].settings.lineHeight,
       lineHeight,
       "Line height should match.",
     );
+    console.log("    ✅ Line height matches.");
   });
 
   await test.step("Action: createDocumentSettings - Duplicate current settings for document", async () => {
@@ -347,13 +369,16 @@ Deno.test("TextSettings Concept Tests Suite", {
 
     if (!isError(result)) {
       throw new Error(
-        "Expected an error for duplicate current settings, but got success.",
+        "❌ Expected an error for duplicate current settings, but got success.",
       );
     }
     assertEquals(
       result.error,
       `Document ${document} already has current text settings.`,
       "Error message should indicate duplicate current.",
+    );
+    console.log(
+      "    ✅ Expected error returned for duplicate current settings.",
     );
   });
 
@@ -403,7 +428,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       );
       if (!isError(result)) {
         throw new Error(
-          `Expected an error for invalid input, but got success for: ${
+          `❌ Expected an error for invalid input, but got success for: ${
             JSON.stringify(tc)
           }`,
         );
@@ -413,6 +438,7 @@ Deno.test("TextSettings Concept Tests Suite", {
         tc.expectedError,
         `Error message should match for: ${tc.expectedError}`,
       );
+      console.log(`    ✅ Expected error '${tc.expectedError}' returned.`);
     }
   });
 
@@ -441,6 +467,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       createResult,
       "Expected successful creation of user settings.",
     );
+    console.log("    ✅ Initial user settings created successfully.");
     const settingsId = createResult.settings;
     console.log(`  Created initial settings ${settingsId} for ${user}.`);
 
@@ -460,11 +487,13 @@ Deno.test("TextSettings Concept Tests Suite", {
       }`,
     );
     assertSuccessfulAction(editResult, "Expected successful edit of settings.");
+    console.log("    ✅ Edit action returned successfully.");
     assertEquals(
       editResult,
       {},
       "Empty object should be returned on successful edit.",
     );
+    console.log("    ✅ Empty object returned on successful edit.");
 
     const updatedSettingsResult = await textSettingsConcept._getTextSettings({
       textSettingsId: settingsId,
@@ -476,26 +505,31 @@ Deno.test("TextSettings Concept Tests Suite", {
       updatedSettingsResult,
       "Expected successful retrieval of updated settings.",
     );
+    console.log("    ✅ Updated settings query returned successfully.");
     assertEquals(
       updatedSettingsResult.length,
       1,
       "Settings should still exist.",
     );
+    console.log("    ✅ Settings still exist.");
     assertEquals(
       updatedSettingsResult[0].settings.font,
       newFont,
       "Font should be updated.",
     );
+    console.log("    ✅ Font updated correctly.");
     assertEquals(
       updatedSettingsResult[0].settings.fontSize,
       newFontSize,
       "Font size should be updated.",
     );
+    console.log("    ✅ Font size updated correctly.");
     assertEquals(
       updatedSettingsResult[0].settings.lineHeight,
       newLineHeight,
       "Line height should be updated.",
     );
+    console.log("    ✅ Line height updated correctly.");
   });
 
   await test.step("Action: editSettings - Non-existent textSettings ID", async () => {
@@ -527,7 +561,7 @@ Deno.test("TextSettings Concept Tests Suite", {
 
     if (!isError(result)) {
       throw new Error(
-        "Expected an error for non-existent settings, but got success.",
+        "❌ Expected an error for non-existent settings, but got success.",
       );
     }
     assertEquals(
@@ -535,6 +569,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       `TextSettings with ID ${nonExistentSettings} not found.`,
       "Error message should indicate not found.",
     );
+    console.log("    ✅ Expected error returned for non-existent settings.");
   });
 
   await test.step("Action: editSettings - Invalid inputs", async () => {
@@ -595,7 +630,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       );
       if (!isError(result)) {
         throw new Error(
-          `Expected an error for invalid input, but got success for: ${
+          `❌ Expected an error for invalid input, but got success for: ${
             JSON.stringify(tc)
           }`,
         );
@@ -605,6 +640,7 @@ Deno.test("TextSettings Concept Tests Suite", {
         tc.expectedError,
         `Error message should match for: ${tc.expectedError}`,
       );
+      console.log(`    ✅ Expected error '${tc.expectedError}' returned.`);
     }
   });
 
@@ -639,44 +675,49 @@ Deno.test("TextSettings Concept Tests Suite", {
     const settingsId = createResult.settings;
     console.log(`  Created default settings for ${userWithDefaults}.`);
 
-    const defaultsForFrank = await textSettingsConcept._getUserDefaultSettings({
-      user: userWithDefaults,
-    });
+    const defaultsForFrankResult = await textSettingsConcept
+      ._getUserDefaultSettings({ user: userWithDefaults });
     console.log(
-      `  Defaults for ${userWithDefaults}: ${JSON.stringify(defaultsForFrank)}`,
-    );
-    assertSuccessfulSettingsQuery(
-      defaultsForFrank,
-      "Expected successful retrieval of defaults for Frank.",
-    );
-    assertEquals(
-      defaultsForFrank.length,
-      1,
-      "Should find default settings for Frank.",
-    );
-    assertEquals(
-      defaultsForFrank[0].settings._id,
-      settingsId,
-      "Settings ID should match.",
-    );
-
-    const defaultsForGrace = await textSettingsConcept._getUserDefaultSettings({
-      user: userWithoutDefaults,
-    });
-    console.log(
-      `  Defaults for ${userWithoutDefaults}: ${
-        JSON.stringify(defaultsForGrace)
+      `  Defaults for ${userWithDefaults}: ${
+        JSON.stringify(defaultsForFrankResult)
       }`,
     );
     assertSuccessfulSettingsQuery(
-      defaultsForGrace,
+      defaultsForFrankResult,
+      "Expected successful retrieval of defaults for Frank.",
+    );
+    console.log("    ✅ Query for Frank's defaults returned successfully.");
+    assertEquals(
+      defaultsForFrankResult.length,
+      1,
+      "Should find default settings for Frank.",
+    );
+    console.log("    ✅ Frank's default settings found.");
+    assertEquals(
+      defaultsForFrankResult[0].settings._id,
+      settingsId,
+      "Settings ID should match.",
+    );
+    console.log("    ✅ Frank's settings ID matches.");
+
+    const defaultsForGraceResult = await textSettingsConcept
+      ._getUserDefaultSettings({ user: userWithoutDefaults });
+    console.log(
+      `  Defaults for ${userWithoutDefaults}: ${
+        JSON.stringify(defaultsForGraceResult)
+      }`,
+    );
+    assertSuccessfulSettingsQuery(
+      defaultsForGraceResult,
       "Expected successful retrieval for Grace (could be empty).",
     );
+    console.log("    ✅ Query for Grace's defaults returned successfully.");
     assertEquals(
-      defaultsForGrace.length,
+      defaultsForGraceResult.length,
       0,
       "Should find no default settings for Grace.",
     );
+    console.log("    ✅ No default settings found for Grace, as expected.");
   });
 
   await test.step("Query: _getDocumentCurrentSettings - Document with and without current settings", async () => {
@@ -710,44 +751,53 @@ Deno.test("TextSettings Concept Tests Suite", {
     const settingsId = createResult.settings;
     console.log(`  Created current settings for ${docWithCurrents}.`);
 
-    const currentsForProject = await textSettingsConcept
+    const currentsForProjectResult = await textSettingsConcept
       ._getDocumentCurrentSettings({ document: docWithCurrents });
     console.log(
       `  Currents for ${docWithCurrents}: ${
-        JSON.stringify(currentsForProject)
+        JSON.stringify(currentsForProjectResult)
       }`,
     );
     assertSuccessfulSettingsQuery(
-      currentsForProject,
+      currentsForProjectResult,
       "Expected successful retrieval of current settings for Project.",
     );
+    console.log(
+      "    ✅ Query for Project's current settings returned successfully.",
+    );
     assertEquals(
-      currentsForProject.length,
+      currentsForProjectResult.length,
       1,
       "Should find current settings for Project.",
     );
+    console.log("    ✅ Project's current settings found.");
     assertEquals(
-      currentsForProject[0].settings._id,
+      currentsForProjectResult[0].settings._id,
       settingsId,
       "Settings ID should match.",
     );
+    console.log("    ✅ Project's settings ID matches.");
 
-    const currentsForIdea = await textSettingsConcept
+    const currentsForIdeaResult = await textSettingsConcept
       ._getDocumentCurrentSettings({ document: docWithoutCurrents });
     console.log(
       `  Currents for ${docWithoutCurrents}: ${
-        JSON.stringify(currentsForIdea)
+        JSON.stringify(currentsForIdeaResult)
       }`,
     );
     assertSuccessfulSettingsQuery(
-      currentsForIdea,
+      currentsForIdeaResult,
       "Expected successful retrieval for Idea (could be empty).",
     );
+    console.log(
+      "    ✅ Query for Idea's current settings returned successfully.",
+    );
     assertEquals(
-      currentsForIdea.length,
+      currentsForIdeaResult.length,
       0,
       "Should find no current settings for Idea.",
     );
+    console.log("    ✅ No current settings found for Idea, as expected.");
   });
 
   await test.step("Query: _getTextSettings - Existing and non-existent settings ID", async () => {
@@ -792,16 +842,19 @@ Deno.test("TextSettings Concept Tests Suite", {
       foundSettingsResult,
       "Expected successful retrieval of existing settings.",
     );
+    console.log("    ✅ Query for existing settings returned successfully.");
     assertEquals(
       foundSettingsResult.length,
       1,
       "Should find the existing settings.",
     );
+    console.log("    ✅ Existing settings found.");
     assertEquals(
       foundSettingsResult[0].settings.font,
       font,
       "Font should match.",
     );
+    console.log("    ✅ Font matches.");
 
     const nonExistentSettingsId = "settings:anotherNonExistent" as ID;
     const notFoundSettingsResult = await textSettingsConcept._getTextSettings({
@@ -816,11 +869,15 @@ Deno.test("TextSettings Concept Tests Suite", {
       notFoundSettingsResult,
       "Expected successful retrieval for non-existent settings (should be empty).",
     );
+    console.log(
+      "    ✅ Query for non-existent settings returned successfully.",
+    );
     assertEquals(
       notFoundSettingsResult.length,
       0,
       "Should find no settings for non-existent ID.",
     );
+    console.log("    ✅ No settings found for non-existent ID, as expected.");
   });
 
   await test.step("Principle Trace: Default settings loaded for new document, then customized", async () => {
@@ -861,6 +918,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       createUserSettingsResult,
       "User default settings should be created.",
     );
+    console.log("    ✅ User default settings created.");
     const userDefaultSettingsId = createUserSettingsResult.settings;
     console.log(
       `   Effect: User ${user} now has default TextSettings ID: ${userDefaultSettingsId}`,
@@ -877,16 +935,15 @@ Deno.test("TextSettings Concept Tests Suite", {
       defaultFont,
       "User default font should be set.",
     );
+    console.log("    ✅ Verified user default font matches.");
 
     console.log(
       `2. Action: simulate 'opening a new document' by directly calling createDocumentSettings.`,
     );
-    // In a real app, this would be triggered by a sync from a Document concept upon document creation.
-    // For this test, we directly call the TextSettings action that sync would invoke.
     const createDocSettingsResult = await textSettingsConcept
       .createDocumentSettings({
         document,
-        font: defaultFont, // Assuming sync applies default values here
+        font: defaultFont,
         fontSize: defaultFontSize,
         lineHeight: defaultLineHeight,
       });
@@ -894,6 +951,7 @@ Deno.test("TextSettings Concept Tests Suite", {
       createDocSettingsResult,
       "Document settings should be created.",
     );
+    console.log("    ✅ Document settings created.");
     const documentCurrentSettingsId = createDocSettingsResult.settings;
     console.log(
       `   Effect: Document ${document} now has current TextSettings ID: ${documentCurrentSettingsId}, initialized with user defaults.`,
@@ -910,6 +968,9 @@ Deno.test("TextSettings Concept Tests Suite", {
       defaultFont,
       "Document current font should be initialized from default.",
     );
+    console.log(
+      "    ✅ Verified document current font initialized from user default.",
+    );
 
     console.log(
       `3. Action: editSettings to customize document settings for ${document}`,
@@ -924,11 +985,13 @@ Deno.test("TextSettings Concept Tests Suite", {
       editSettingsResult,
       "Editing document settings should succeed.",
     );
+    console.log("    ✅ Editing document settings succeeded.");
     assertEquals(
       editSettingsResult,
       {},
       "Empty object should be returned on successful edit.",
     );
+    console.log("    ✅ Empty object returned on successful edit.");
     console.log(
       `   Effect: Document ${document}'s settings (ID: ${documentCurrentSettingsId}) updated to custom values.`,
     );
@@ -967,6 +1030,7 @@ Deno.test("TextSettings Concept Tests Suite", {
         JSON.stringify(finalDocSettingsResult[0].settings)
       }`,
     );
+    console.log("    ✅ All document settings are customized and verified.");
 
     console.log(
       "\nPrinciple fulfilled: User created default settings, new document loaded them, and then document-specific settings were customized and remembered.",

@@ -8,6 +8,24 @@ import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import AnnotationConcept from "./AnnotationConcept.ts";
 
+// Custom logging function for individual test steps
+async function logAndRunStep(
+  t: Deno.TestContext,
+  stepName: string,
+  testFunction: () => Promise<void>,
+) {
+  await t.step(stepName, async () => {
+    try {
+      console.log(`\n--- Test: ${stepName} ---`); // Original log for test context
+      await testFunction();
+      console.log(`✅ ${stepName}`); // Emoji for pass
+    } catch (e) {
+      console.log(`❌ ${stepName}`); // Emoji for fail
+      throw e; // Re-throw the error so Deno's test runner also registers it as a failure
+    }
+  });
+}
+
 // Test-specific generic IDs
 const userAlice = "user:Alice" as ID;
 const userBob = "user:Bob" as ID;
@@ -18,8 +36,7 @@ Deno.test("Annotation Concept: Basic Tag Management", async (t) => {
   const [db, client] = await testDb();
   const concept = new AnnotationConcept(db);
 
-  await t.step("should create a tag successfully", async () => {
-    console.log("--- Test: createTag (success) ---");
+  await logAndRunStep(t, "should create a tag successfully", async () => {
     const result = await concept.createTag({
       creator: userAlice,
       title: "Important",
@@ -30,33 +47,36 @@ Deno.test("Annotation Concept: Basic Tag Management", async (t) => {
     const foundTag = await db.collection("Annotation.tags").findOne({
       _id: result.tag,
     });
-    assertExists(foundTag, "Tag should exist in the database."); // Added assertExists
+    assertExists(foundTag, "Tag should exist in the database.");
     assertEquals(foundTag.title, "Important");
     assertEquals(foundTag.creator, userAlice);
     console.log("Verified tag exists in DB.");
   });
 
-  await t.step("should prevent creating a duplicate tag", async () => {
-    console.log("--- Test: createTag (duplicate failure) ---");
-    // Create the tag first
-    await concept.createTag({ creator: userAlice, title: "DuplicateTag" });
+  await logAndRunStep(
+    t,
+    "should prevent creating a duplicate tag",
+    async () => {
+      // Create the tag first
+      await concept.createTag({ creator: userAlice, title: "DuplicateTag" });
 
-    // Attempt to create it again
-    const result = await concept.createTag({
-      creator: userAlice,
-      title: "DuplicateTag",
-    });
-    console.log("createTag duplicate result:", result);
-    assertExists(
-      result.error,
-      "Duplicate tag creation should return an error.",
-    );
-    assertEquals(
-      result.error,
-      "A tag with this creator and title already exists.",
-    );
-    console.log("Verified duplicate tag creation returns an error.");
-  });
+      // Attempt to create it again
+      const result = await concept.createTag({
+        creator: userAlice,
+        title: "DuplicateTag",
+      });
+      console.log("createTag duplicate result:", result);
+      assertExists(
+        result.error,
+        "Duplicate tag creation should return an error.",
+      );
+      assertEquals(
+        result.error,
+        "A tag with this creator and title already exists.",
+      );
+      console.log("Verified duplicate tag creation returns an error.");
+    },
+  );
 
   await client.close();
 });
@@ -65,28 +85,31 @@ Deno.test("Annotation Concept: Document Registration Utilities", async (t) => {
   const [db, client] = await testDb();
   const concept = new AnnotationConcept(db);
 
-  await t.step("should register a document view successfully", async () => {
-    console.log("--- Test: _registerDocument (success) ---");
-    const result = await concept._registerDocument({
-      documentId: docA,
-      creatorId: userAlice,
-    });
-    console.log("_registerDocument result:", result);
-    assertEquals(result, {}, "Document registration should be successful.");
+  await logAndRunStep(
+    t,
+    "should register a document view successfully",
+    async () => {
+      const result = await concept._registerDocument({
+        documentId: docA,
+        creatorId: userAlice,
+      });
+      console.log("_registerDocument result:", result);
+      assertEquals(result, {}, "Document registration should be successful.");
 
-    const docView = await db.collection("Annotation.documentViews").findOne({
-      _id: docA,
-    });
-    assertExists(docView, "Document view should exist in DB."); // Added assertExists
-    assertEquals(docView.creator, userAlice);
-    assertEquals(docView.annotations, []);
-    console.log("Verified document view registered.");
-  });
+      const docView = await db.collection("Annotation.documentViews").findOne({
+        _id: docA,
+      });
+      assertExists(docView, "Document view should exist in DB.");
+      assertEquals(docView.creator, userAlice);
+      assertEquals(docView.annotations, []);
+      console.log("Verified document view registered.");
+    },
+  );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should prevent registering a duplicate document view",
     async () => {
-      console.log("--- Test: _registerDocument (duplicate failure) ---");
       // Register once
       await concept._registerDocument({ documentId: docB, creatorId: userBob });
 
@@ -108,50 +131,54 @@ Deno.test("Annotation Concept: Document Registration Utilities", async (t) => {
     },
   );
 
-  await t.step("should delete a document view successfully", async () => {
-    console.log("--- Test: _deleteDocumentView (success) ---");
-    // Setup: Register a document and add an annotation to it
-    await concept._registerDocument({
-      documentId: "doc:toDelete" as ID,
-      creatorId: userAlice,
-    });
-    const tagResult = await concept.createTag({
-      creator: userAlice,
-      title: "temp-tag",
-    });
-    const annotationResult = await concept.createAnnotation({
-      creator: userAlice,
-      document: "doc:toDelete" as ID,
-      content: "Annotation to be deleted with document.",
-      location: "cfi:/0/0",
-      tags: [tagResult.tag!],
-    });
-    assertExists(annotationResult.annotation);
+  await logAndRunStep(
+    t,
+    "should delete a document view successfully",
+    async () => {
+      // Setup: Register a document and add an annotation to it
+      await concept._registerDocument({
+        documentId: "doc:toDelete" as ID,
+        creatorId: userAlice,
+      });
+      const tagResult = await concept.createTag({
+        creator: userAlice,
+        title: "temp-tag",
+      });
+      assertExists(tagResult.tag);
+      const annotationResult = await concept.createAnnotation({
+        creator: userAlice,
+        document: "doc:toDelete" as ID,
+        content: "Annotation to be deleted with document.",
+        location: "cfi:/0/0",
+        tags: [tagResult.tag!],
+      });
+      assertExists(annotationResult.annotation);
 
-    const deleteResult = await concept._deleteDocumentView({
-      documentId: "doc:toDelete" as ID,
-    });
-    console.log("_deleteDocumentView result:", deleteResult);
-    assertEquals(
-      deleteResult,
-      {},
-      "Document view deletion should be successful.",
-    );
+      const deleteResult = await concept._deleteDocumentView({
+        documentId: "doc:toDelete" as ID,
+      });
+      console.log("_deleteDocumentView result:", deleteResult);
+      assertEquals(
+        deleteResult,
+        {},
+        "Document view deletion should be successful.",
+      );
 
-    const docView = await db.collection("Annotation.documentViews").findOne({
-      _id: "doc:toDelete" as ID,
-    });
-    assertEquals(docView, null, "Document view should be removed from DB.");
+      const docView = await db.collection("Annotation.documentViews").findOne({
+        _id: "doc:toDelete" as ID,
+      });
+      assertEquals(docView, null, "Document view should be removed from DB.");
 
-    const deletedAnnotation = await db.collection("Annotation.annotations")
-      .findOne({ _id: annotationResult.annotation });
-    assertEquals(
-      deletedAnnotation,
-      null,
-      "Associated annotations should also be deleted.",
-    );
-    console.log("Verified document view and associated annotations deleted.");
-  });
+      const deletedAnnotation = await db.collection("Annotation.annotations")
+        .findOne({ _id: annotationResult.annotation });
+      assertEquals(
+        deletedAnnotation,
+        null,
+        "Associated annotations should also be deleted.",
+      );
+      console.log("Verified document view and associated annotations deleted.");
+    },
+  );
 
   await client.close();
 });
@@ -163,10 +190,10 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
   // Setup: Register docA for Alice
   await concept._registerDocument({ documentId: docA, creatorId: userAlice });
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should create an annotation successfully with content",
     async () => {
-      console.log("--- Test: createAnnotation (success with content) ---");
       const result = await concept.createAnnotation({
         creator: userAlice,
         document: docA,
@@ -182,7 +209,7 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
 
       const foundAnnotation = await db.collection("Annotation.annotations")
         .findOne({ _id: result.annotation });
-      assertExists(foundAnnotation, "Annotation should exist in the database."); // Added assertExists
+      assertExists(foundAnnotation, "Annotation should exist in the database.");
       assertEquals(foundAnnotation.content, "This is a test annotation.");
       assertEquals(foundAnnotation.creator, userAlice);
       assertEquals(foundAnnotation.document, docA);
@@ -192,7 +219,7 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
       const docView = await db.collection("Annotation.documentViews").findOne({
         _id: docA,
       });
-      assertExists(docView, "Document view should still exist."); // Added assertExists
+      assertExists(docView, "Document view should still exist.");
       assertArrayIncludes(
         docView.annotations,
         [result.annotation!],
@@ -202,17 +229,17 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should create an annotation successfully with color and tags",
     async () => {
-      console.log(
-        "--- Test: createAnnotation (success with color and tags) ---",
-      );
       const tag1 =
         (await concept.createTag({ creator: userAlice, title: "Highlight" }))
           .tag!;
       const tag2 =
         (await concept.createTag({ creator: userAlice, title: "Review" })).tag!;
+      assertExists(tag1);
+      assertExists(tag2);
 
       const result = await concept.createAnnotation({
         creator: userAlice,
@@ -226,7 +253,7 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
 
       const foundAnnotation = await db.collection("Annotation.annotations")
         .findOne({ _id: result.annotation });
-      assertExists(foundAnnotation, "Annotation should exist in DB."); // Added assertExists
+      assertExists(foundAnnotation, "Annotation should exist in DB.");
       assertEquals(foundAnnotation.color, "#FF0000");
       assertArrayIncludes(foundAnnotation.tags, [tag1, tag2]);
       assertEquals(
@@ -238,12 +265,10 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should fail if document does not exist in concept's view",
     async () => {
-      console.log(
-        "--- Test: createAnnotation (document not registered failure) ---",
-      );
       const result = await concept.createAnnotation({
         creator: userAlice,
         document: docB, // Not registered
@@ -264,10 +289,10 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should fail if creator does not own the document view",
     async () => {
-      console.log("--- Test: createAnnotation (wrong creator failure) ---");
       // Register docB for Bob
       await concept._registerDocument({ documentId: docB, creatorId: userBob });
 
@@ -291,12 +316,10 @@ Deno.test("Annotation Concept: Annotation Creation", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should fail if both color and content are omitted",
     async () => {
-      console.log(
-        "--- Test: createAnnotation (missing color/content failure) ---",
-      );
       const result = await concept.createAnnotation({
         creator: userAlice,
         document: docA,
@@ -324,6 +347,7 @@ Deno.test("Annotation Concept: Annotation Deletion", async (t) => {
   await concept._registerDocument({ documentId: docA, creatorId: userAlice });
   const tagForDeletion =
     (await concept.createTag({ creator: userAlice, title: "temp" })).tag!;
+  assertExists(tagForDeletion);
   const annForDeletion = (await concept.createAnnotation({
     creator: userAlice,
     document: docA,
@@ -331,35 +355,41 @@ Deno.test("Annotation Concept: Annotation Deletion", async (t) => {
     location: "cfi:/0/4",
     tags: [tagForDeletion],
   })).annotation!;
+  assertExists(annForDeletion);
 
-  await t.step("should delete an annotation successfully", async () => {
-    console.log("--- Test: deleteAnnotation (success) ---");
-    const result = await concept.deleteAnnotation({
-      user: userAlice,
-      annotation: annForDeletion,
-    });
-    console.log("deleteAnnotation result:", result);
-    assertEquals(result, {}, "Annotation deletion should be successful.");
+  await logAndRunStep(
+    t,
+    "should delete an annotation successfully",
+    async () => {
+      const result = await concept.deleteAnnotation({
+        user: userAlice,
+        annotation: annForDeletion,
+      });
+      console.log("deleteAnnotation result:", result);
+      assertEquals(result, {}, "Annotation deletion should be successful.");
 
-    const foundAnnotation = await db.collection("Annotation.annotations")
-      .findOne({ _id: annForDeletion });
-    assertEquals(
-      foundAnnotation,
-      null,
-      "Annotation should be removed from the database.",
-    );
+      const foundAnnotation = await db.collection("Annotation.annotations")
+        .findOne({ _id: annForDeletion });
+      assertEquals(
+        foundAnnotation,
+        null,
+        "Annotation should be removed from the database.",
+      );
 
-    const docView = await db.collection("Annotation.documentViews").findOne({
-      _id: docA,
-    });
-    assertExists(docView, "Document view should still exist."); // Added assertExists
-    assertNotEquals(
-      docView.annotations.includes(annForDeletion),
-      true,
-      "Document view should not include deleted annotation.",
-    );
-    console.log("Verified annotation deleted and removed from document view.");
-  });
+      const docView = await db.collection("Annotation.documentViews").findOne({
+        _id: docA,
+      });
+      assertExists(docView, "Document view should still exist.");
+      assertNotEquals(
+        docView.annotations.includes(annForDeletion),
+        true,
+        "Document view should not include deleted annotation.",
+      );
+      console.log(
+        "Verified annotation deleted and removed from document view.",
+      );
+    },
+  );
 
   const annForUnauthorizedDelete = (await concept.createAnnotation({
     creator: userAlice,
@@ -368,11 +398,12 @@ Deno.test("Annotation Concept: Annotation Deletion", async (t) => {
     location: "cfi:/0/5",
     tags: [],
   })).annotation!;
+  assertExists(annForUnauthorizedDelete);
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should fail to delete an annotation if user is not the creator",
     async () => {
-      console.log("--- Test: deleteAnnotation (unauthorized failure) ---");
       const result = await concept.deleteAnnotation({
         user: userBob,
         annotation: annForUnauthorizedDelete,
@@ -389,25 +420,28 @@ Deno.test("Annotation Concept: Annotation Deletion", async (t) => {
       assertExists(
         foundAnnotation,
         "Annotation should still exist after unauthorized attempt.",
-      ); // Added assertExists
+      );
       console.log("Verified unauthorized deletion failed.");
     },
   );
 
-  await t.step("should fail to delete a non-existent annotation", async () => {
-    console.log("--- Test: deleteAnnotation (non-existent failure) ---");
-    const result = await concept.deleteAnnotation({
-      user: userAlice,
-      annotation: "nonexistent:ann" as ID,
-    });
-    console.log("deleteAnnotation non-existent result:", result);
-    assertExists(
-      result.error,
-      "Deletion of non-existent annotation should return an error.",
-    );
-    assertEquals(result.error, "Annotation not found.");
-    console.log("Verified deletion of non-existent annotation failed.");
-  });
+  await logAndRunStep(
+    t,
+    "should fail to delete a non-existent annotation",
+    async () => {
+      const result = await concept.deleteAnnotation({
+        user: userAlice,
+        annotation: "nonexistent:ann" as ID,
+      });
+      console.log("deleteAnnotation non-existent result:", result);
+      assertExists(
+        result.error,
+        "Deletion of non-existent annotation should return an error.",
+      );
+      assertEquals(result.error, "Annotation not found.");
+      console.log("Verified deletion of non-existent annotation failed.");
+    },
+  );
 
   await client.close();
 });
@@ -429,15 +463,15 @@ Deno.test("Annotation Concept: Annotation Update", async (t) => {
   assertExists(
     initialAnn,
     "Initial annotation must be created for update tests.",
-  ); // Added assertExists
+  );
   const tagUpdate =
     (await concept.createTag({ creator: userAlice, title: "Updated" })).tag!;
-  assertExists(tagUpdate, "Tag for update must be created for update tests."); // Added assertExists
+  assertExists(tagUpdate, "Tag for update must be created for update tests.");
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should update an annotation's content and color successfully",
     async () => {
-      console.log("--- Test: updateAnnotation (content/color success) ---");
       const result = await concept.updateAnnotation({
         user: userAlice,
         annotation: initialAnn,
@@ -454,7 +488,7 @@ Deno.test("Annotation Concept: Annotation Update", async (t) => {
       const updatedAnn = await db.collection("Annotation.annotations").findOne({
         _id: initialAnn,
       });
-      assertExists(updatedAnn, "Updated annotation should exist in DB."); // Added assertExists
+      assertExists(updatedAnn, "Updated annotation should exist in DB.");
       assertEquals(updatedAnn.content, "Updated content.");
       assertEquals(updatedAnn.color, "#FFFFFF");
       assertEquals(
@@ -466,10 +500,10 @@ Deno.test("Annotation Concept: Annotation Update", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should update an annotation's tags and location successfully",
     async () => {
-      console.log("--- Test: updateAnnotation (tags/location success) ---");
       const result = await concept.updateAnnotation({
         user: userAlice,
         annotation: initialAnn,
@@ -486,7 +520,7 @@ Deno.test("Annotation Concept: Annotation Update", async (t) => {
       const updatedAnn = await db.collection("Annotation.annotations").findOne({
         _id: initialAnn,
       });
-      assertExists(updatedAnn, "Updated annotation should exist in DB."); // Added assertExists
+      assertExists(updatedAnn, "Updated annotation should exist in DB.");
       assertEquals(updatedAnn.location, "cfi:/0/7");
       assertArrayIncludes(updatedAnn.tags, [tagUpdate]);
       assertEquals(
@@ -498,46 +532,58 @@ Deno.test("Annotation Concept: Annotation Update", async (t) => {
     },
   );
 
-  await t.step("should fail to update if user is not the creator", async () => {
-    console.log("--- Test: updateAnnotation (unauthorized failure) ---");
-    const result = await concept.updateAnnotation({
-      user: userBob, // Bob tries to update Alice's annotation
-      annotation: initialAnn,
-      newContent: "Attempted by Bob.",
-    });
-    console.log("updateAnnotation unauthorized result:", result);
-    assertExists(result.error, "Unauthorized update should return an error.");
-    assertEquals(result.error, "User is not the creator of this annotation.");
-    console.log("Verified unauthorized update failed.");
-  });
+  await logAndRunStep(
+    t,
+    "should fail to update if user is not the creator",
+    async () => {
+      const result = await concept.updateAnnotation({
+        user: userBob, // Bob tries to update Alice's annotation
+        annotation: initialAnn,
+        newContent: "Attempted by Bob.",
+      });
+      console.log("updateAnnotation unauthorized result:", result);
+      assertExists(result.error, "Unauthorized update should return an error.");
+      assertEquals(result.error, "User is not the creator of this annotation.");
+      console.log("Verified unauthorized update failed.");
+    },
+  );
 
-  await t.step("should fail to update a non-existent annotation", async () => {
-    console.log("--- Test: updateAnnotation (non-existent failure) ---");
-    const result = await concept.updateAnnotation({
-      user: userAlice,
-      annotation: "nonexistent:ann" as ID,
-      newContent: "Should fail.",
-    });
-    console.log("updateAnnotation non-existent result:", result);
-    assertExists(
-      result.error,
-      "Update of non-existent annotation should return an error.",
-    );
-    assertEquals(result.error, "Annotation not found.");
-    console.log("Verified update of non-existent annotation failed.");
-  });
+  await logAndRunStep(
+    t,
+    "should fail to update a non-existent annotation",
+    async () => {
+      const result = await concept.updateAnnotation({
+        user: userAlice,
+        annotation: "nonexistent:ann" as ID,
+        newContent: "Should fail.",
+      });
+      console.log("updateAnnotation non-existent result:", result);
+      assertExists(
+        result.error,
+        "Update of non-existent annotation should return an error.",
+      );
+      assertEquals(result.error, "Annotation not found.");
+      console.log("Verified update of non-existent annotation failed.");
+    },
+  );
 
-  await t.step("should fail if no fields are provided for update", async () => {
-    console.log("--- Test: updateAnnotation (no fields failure) ---");
-    const result = await concept.updateAnnotation({
-      user: userAlice,
-      annotation: initialAnn,
-    }); // No newColor, newContent, newLocation, newTags
-    console.log("updateAnnotation no fields result:", result);
-    assertExists(result.error, "Update with no fields should return an error.");
-    assertEquals(result.error, "No fields provided for update.");
-    console.log("Verified update with no fields failed.");
-  });
+  await logAndRunStep(
+    t,
+    "should fail if no fields are provided for update",
+    async () => {
+      const result = await concept.updateAnnotation({
+        user: userAlice,
+        annotation: initialAnn,
+      }); // No newColor, newContent, newLocation, newTags
+      console.log("updateAnnotation no fields result:", result);
+      assertExists(
+        result.error,
+        "Update with no fields should return an error.",
+      );
+      assertEquals(result.error, "No fields provided for update.");
+      console.log("Verified update with no fields failed.");
+    },
+  );
 
   await client.close();
 });
@@ -550,7 +596,7 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
   await concept._registerDocument({ documentId: docA, creatorId: userAlice });
 
   // Setup for Bob: Register docB for Bob
-  await concept._registerDocument({ documentId: docB, creatorId: userBob }); // NEW: Register docB for Bob
+  await concept._registerDocument({ documentId: docB, creatorId: userBob }); // Register docB for Bob
 
   // Create tags for Alice
   const tagConcept =
@@ -571,7 +617,7 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     location: "cfi:/a/1",
     tags: [tagConcept, tagDesign],
   })).annotation!;
-  assertExists(ann1); // Ensure ann1 is not null
+  assertExists(ann1);
   const ann2 = (await concept.createAnnotation({
     creator: userAlice,
     document: docA,
@@ -579,7 +625,7 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     location: "cfi:/a/2",
     tags: [tagDesign],
   })).annotation!;
-  assertExists(ann2); // Ensure ann2 is not null
+  assertExists(ann2);
   const ann3 = (await concept.createAnnotation({
     creator: userAlice,
     document: docA,
@@ -587,7 +633,7 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     location: "cfi:/a/3",
     tags: [tagTesting],
   })).annotation!;
-  assertExists(ann3); // Ensure ann3 is not null
+  assertExists(ann3);
   const ann4 = (await concept.createAnnotation({
     creator: userAlice,
     document: docA,
@@ -595,12 +641,12 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     location: "cfi:/a/4",
     tags: [],
   })).annotation!;
-  assertExists(ann4); // Ensure ann4 is not null
+  assertExists(ann4);
 
   // Create an annotation for Bob on docB (This will now succeed as Bob is the creator of docB)
   const annBob = (await concept.createAnnotation({
     creator: userBob,
-    document: docB, // CHANGED: Bob annotates docB
+    document: docB, // Bob annotates docB
     content: "Bob's annotation on his document.",
     location: "cfi:/b/1",
     tags: [],
@@ -608,12 +654,12 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
   assertExists(
     annBob,
     "Bob's annotation should now be successfully created on his document.",
-  ); // Ensure annBob is not null
+  );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should search by content keyword (case-insensitive)",
     async () => {
-      console.log("--- Test: search by content ---");
       const result = await concept.search({
         user: userAlice,
         document: docA,
@@ -633,28 +679,30 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     },
   );
 
-  await t.step("should search by tag title (case-insensitive)", async () => {
-    console.log("--- Test: search by tag ---");
-    const result = await concept.search({
-      user: userAlice,
-      document: docA,
-      criteria: "testing",
-    });
-    console.log(
-      "Search 'testing' result:",
-      result.annotations.map((a) => a._id),
-    );
-    assertEquals(
-      result.annotations.length,
-      1,
-      "Should find 1 annotation matching 'testing' tag.",
-    );
-    assertArrayIncludes(result.annotations.map((a) => a._id), [ann3]);
-    console.log("Verified search by tag title.");
-  });
+  await logAndRunStep(
+    t,
+    "should search by tag title (case-insensitive)",
+    async () => {
+      const result = await concept.search({
+        user: userAlice,
+        document: docA,
+        criteria: "testing",
+      });
+      console.log(
+        "Search 'testing' result:",
+        result.annotations.map((a) => a._id),
+      );
+      assertEquals(
+        result.annotations.length,
+        1,
+        "Should find 1 annotation matching 'testing' tag.",
+      );
+      assertArrayIncludes(result.annotations.map((a) => a._id), [ann3]);
+      console.log("Verified search by tag title.");
+    },
+  );
 
-  await t.step("should search by content OR tag", async () => {
-    console.log("--- Test: search by content OR tag ---");
+  await logAndRunStep(t, "should search by content OR tag", async () => {
     const result = await concept.search({
       user: userAlice,
       document: docA,
@@ -673,10 +721,10 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     console.log("Verified search by content OR tag.");
   });
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should return an empty list if no annotations match",
     async () => {
-      console.log("--- Test: search (no match) ---");
       const result = await concept.search({
         user: userAlice,
         document: docA,
@@ -692,10 +740,10 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should not return annotations from other users on their documents",
-    async () => { // Updated description
-      console.log("--- Test: search (other user's document authorization) ---");
+    async () => {
       // Alice searches on docB (which she doesn't own). The search method should return an error.
       const result = await concept.search({
         user: userAlice,
@@ -722,12 +770,10 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should not return other user's annotations even if on a document I own (if such were possible)",
-    async () => { // Updated description
-      console.log(
-        "--- Test: search (other user's annotation on my document - filtered by query) ---",
-      );
+    async () => {
       // If somehow Bob managed to annotate docA (owned by Alice), Alice's search should still filter them out.
       // (Given the createAnnotation rules, this scenario would typically not happen unless permissions were looser).
       // Here, Bob's actual annotation is on docB, so searching docA for "Bob's" should yield no results.
@@ -751,10 +797,10 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "Bob should find his own annotation on his document",
     async () => {
-      console.log("--- Test: Bob finds his own annotation ---");
       const resultBob = await concept.search({
         user: userBob,
         document: docB,
@@ -775,10 +821,10 @@ Deno.test("Annotation Concept: Annotation Search", async (t) => {
     },
   );
 
-  await t.step(
+  await logAndRunStep(
+    t,
     "should fail if document is not found in concept's view",
     async () => {
-      console.log("--- Test: search (document not registered failure) ---");
       const result = await concept.search({
         user: userAlice,
         document: "nonexistent:doc" as ID,
@@ -817,198 +863,242 @@ Deno.test("Annotation Concept: Principle Fulfillment Test", async (t) => {
   const readerUser = "user:Reader" as ID;
   const bookDoc = "document:TheGreatBook" as ID;
 
-  // 1. Setup: Register the document for the reader
-  console.log(
+  await logAndRunStep(
+    t,
     `Step 1: Registering document ${bookDoc} for user ${readerUser}.`,
+    async () => {
+      const registerResult = await concept._registerDocument({
+        documentId: bookDoc,
+        creatorId: readerUser,
+      });
+      assertEquals(
+        registerResult,
+        {},
+        "Document registration for principle should succeed.",
+      );
+    },
   );
-  const registerResult = await concept._registerDocument({
-    documentId: bookDoc,
-    creatorId: readerUser,
-  });
-  assertEquals(
-    registerResult,
-    {},
-    "Document registration for principle should succeed.",
+
+  await logAndRunStep(
+    t,
+    `Step 2: ${readerUser} creates tags 'Character' and 'Theme'.`,
+    async () => {
+      const charTagResult = await concept.createTag({
+        creator: readerUser,
+        title: "Character",
+      });
+      assertExists(charTagResult.tag, "Character tag creation should succeed.");
+      const charTag = charTagResult.tag!;
+
+      const themeTagResult = await concept.createTag({
+        creator: readerUser,
+        title: "Theme",
+      });
+      assertExists(themeTagResult.tag, "Theme tag creation should succeed.");
+      const themeTag = themeTagResult.tag!;
+      console.log(`Tags created: ${charTag}, ${themeTag}`);
+
+      // Store for later steps in this block if needed
+      (t as any).charTag = charTag;
+      (t as any).themeTag = themeTag;
+    },
   );
 
-  // 2. User creates tags
-  console.log(`Step 2: ${readerUser} creates tags 'Character' and 'Theme'.`);
-  const charTagResult = await concept.createTag({
-    creator: readerUser,
-    title: "Character",
-  });
-  assertExists(charTagResult.tag, "Character tag creation should succeed.");
-  const charTag = charTagResult.tag!;
+  await logAndRunStep(
+    t,
+    `Step 3: ${readerUser} creates multiple annotations on the document.`,
+    async () => {
+      const charTag = (t as any).charTag;
+      const themeTag = (t as any).themeTag;
 
-  const themeTagResult = await concept.createTag({
-    creator: readerUser,
-    title: "Theme",
-  });
-  assertExists(themeTagResult.tag, "Theme tag creation should succeed.");
-  const themeTag = themeTagResult.tag!;
-  console.log(`Tags created: ${charTag}, ${themeTag}`);
+      const annCharDescResult = await concept.createAnnotation({
+        creator: readerUser,
+        document: bookDoc,
+        content: "Description of the protagonist's personality.",
+        location: "cfi:/p1/ch1",
+        tags: [charTag],
+      });
+      assertExists(
+        annCharDescResult.annotation,
+        "Annotation 1 creation should succeed.",
+      );
+      const annCharDesc = annCharDescResult.annotation!;
+      console.log(
+        `Created annotation 1 (Character description): ${annCharDesc}`,
+      );
 
-  // 3. User creates multiple annotations on the document
-  console.log(`Step 3: ${readerUser} creates annotations on ${bookDoc}.`);
-  const annCharDescResult = await concept.createAnnotation({
-    creator: readerUser,
-    document: bookDoc,
-    content: "Description of the protagonist's personality.",
-    location: "cfi:/p1/ch1",
-    tags: [charTag],
-  });
-  assertExists(
-    annCharDescResult.annotation,
-    "Annotation 1 creation should succeed.",
+      const annHighlightThemeResult = await concept.createAnnotation({
+        creator: readerUser,
+        document: bookDoc,
+        color: "#FFFF00", // Yellow highlight
+        location: "cfi:/p2/s3",
+        tags: [themeTag],
+      });
+      assertExists(
+        annHighlightThemeResult.annotation,
+        "Annotation 2 creation should succeed.",
+      );
+      const annHighlightTheme = annHighlightThemeResult.annotation!;
+      console.log(
+        `Created annotation 2 (Theme highlight): ${annHighlightTheme}`,
+      );
+
+      const annQuestionResult = await concept.createAnnotation({
+        creator: readerUser,
+        document: bookDoc,
+        content: "Is this symbolism or just descriptive language?",
+        location: "cfi:/p3/l5",
+        tags: [themeTag],
+      });
+      assertExists(
+        annQuestionResult.annotation,
+        "Annotation 3 creation should succeed.",
+      );
+      const annQuestion = annQuestionResult.annotation!;
+      console.log(
+        `Created annotation 3 (Question about theme): ${annQuestion}`,
+      );
+
+      const annNoteResult = await concept.createAnnotation({
+        creator: readerUser,
+        document: bookDoc,
+        content: "Remember to re-read this section later.",
+        location: "cfi:/p4/ch2",
+        tags: [],
+      });
+      assertExists(
+        annNoteResult.annotation,
+        "Annotation 4 creation should succeed.",
+      );
+      const annNote = annNoteResult.annotation!;
+      console.log(`Created annotation 4 (General note): ${annNote}`);
+
+      // Store for later steps
+      (t as any).annCharDesc = annCharDesc;
+      (t as any).annHighlightTheme = annHighlightTheme;
+      (t as any).annQuestion = annQuestion;
+      (t as any).annNote = annNote;
+    },
   );
-  const annCharDesc = annCharDescResult.annotation!;
-  console.log(`Created annotation 1 (Character description): ${annCharDesc}`);
 
-  const annHighlightThemeResult = await concept.createAnnotation({
-    creator: readerUser,
-    document: bookDoc,
-    color: "#FFFF00", // Yellow highlight
-    location: "cfi:/p2/s3",
-    tags: [themeTag],
-  });
-  assertExists(
-    annHighlightThemeResult.annotation,
-    "Annotation 2 creation should succeed.",
-  );
-  const annHighlightTheme = annHighlightThemeResult.annotation!;
-  console.log(`Created annotation 2 (Theme highlight): ${annHighlightTheme}`);
-
-  const annQuestionResult = await concept.createAnnotation({
-    creator: readerUser,
-    document: bookDoc,
-    content: "Is this symbolism or just descriptive language?",
-    location: "cfi:/p3/l5",
-    tags: [themeTag],
-  });
-  assertExists(
-    annQuestionResult.annotation,
-    "Annotation 3 creation should succeed.",
-  );
-  const annQuestion = annQuestionResult.annotation!;
-  console.log(`Created annotation 3 (Question about theme): ${annQuestion}`);
-
-  const annNoteResult = await concept.createAnnotation({
-    creator: readerUser,
-    document: bookDoc,
-    content: "Remember to re-read this section later.",
-    location: "cfi:/p4/ch2",
-    tags: [],
-  });
-  assertExists(
-    annNoteResult.annotation,
-    "Annotation 4 creation should succeed.",
-  );
-  const annNote = annNoteResult.annotation!;
-  console.log(`Created annotation 4 (General note): ${annNote}`);
-
-  // 4. User searches for annotations by keyword in content
-  console.log(
+  await logAndRunStep(
+    t,
     `Step 4: ${readerUser} searches for annotations with 'personality'.`,
+    async () => {
+      const annCharDesc = (t as any).annCharDesc;
+      let searchResult1 = await concept.search({
+        user: readerUser,
+        document: bookDoc,
+        criteria: "personality",
+      });
+      console.log(
+        "Search result 1 (personality):",
+        searchResult1.annotations.map((a) => a._id),
+      );
+      assertEquals(searchResult1.annotations.length, 1);
+      assertArrayIncludes(searchResult1.annotations.map((a) => a._id), [
+        annCharDesc,
+      ]);
+      console.log("Verified search by content keyword 'personality'.");
+    },
   );
-  let searchResult1 = await concept.search({
-    user: readerUser,
-    document: bookDoc,
-    criteria: "personality",
-  });
-  console.log(
-    "Search result 1 (personality):",
-    searchResult1.annotations.map((a) => a._id),
-  );
-  assertEquals(searchResult1.annotations.length, 1);
-  assertArrayIncludes(searchResult1.annotations.map((a) => a._id), [
-    annCharDesc,
-  ]);
-  console.log("Verified search by content keyword 'personality'.");
 
-  // 5. User searches for annotations by tag
-  console.log(
+  await logAndRunStep(
+    t,
     `Step 5: ${readerUser} searches for annotations with tag 'Theme'.`,
+    async () => {
+      const annHighlightTheme = (t as any).annHighlightTheme;
+      const annQuestion = (t as any).annQuestion;
+      let searchResult2 = await concept.search({
+        user: readerUser,
+        document: bookDoc,
+        criteria: "Theme",
+      });
+      console.log(
+        "Search result 2 (Theme tag):",
+        searchResult2.annotations.map((a) => a._id),
+      );
+      assertEquals(searchResult2.annotations.length, 2);
+      assertArrayIncludes(searchResult2.annotations.map((a) => a._id), [
+        annHighlightTheme,
+        annQuestion,
+      ]);
+      console.log("Verified search by tag 'Theme'.");
+    },
   );
-  let searchResult2 = await concept.search({
-    user: readerUser,
-    document: bookDoc,
-    criteria: "Theme",
-  });
-  console.log(
-    "Search result 2 (Theme tag):",
-    searchResult2.annotations.map((a) => a._id),
-  );
-  assertEquals(searchResult2.annotations.length, 2);
-  assertArrayIncludes(searchResult2.annotations.map((a) => a._id), [
-    annHighlightTheme,
-    annQuestion,
-  ]);
-  console.log("Verified search by tag 'Theme'.");
 
-  // 6. User searches for annotations by both (content or tag)
-  console.log(
+  await logAndRunStep(
+    t,
     `Step 6: ${readerUser} searches for annotations with 'language' (matches content) or 'Character' (matches tag).`,
-  );
-  let searchResult3 = await concept.search({
-    user: readerUser,
-    document: bookDoc,
-    criteria: "language",
-  });
-  console.log(
-    "Search result 3 (language):",
-    searchResult3.annotations.map((a) => a._id),
-  );
-  assertEquals(searchResult3.annotations.length, 1);
-  assertArrayIncludes(searchResult3.annotations.map((a) => a._id), [
-    annQuestion,
-  ]);
-  console.log("Verified search by content 'language'.");
+    async () => {
+      const annCharDesc = (t as any).annCharDesc;
+      const annQuestion = (t as any).annQuestion;
+      let searchResult3 = await concept.search({
+        user: readerUser,
+        document: bookDoc,
+        criteria: "language",
+      });
+      console.log(
+        "Search result 3 (language):",
+        searchResult3.annotations.map((a) => a._id),
+      );
+      assertEquals(searchResult3.annotations.length, 1);
+      assertArrayIncludes(searchResult3.annotations.map((a) => a._id), [
+        annQuestion,
+      ]);
+      console.log("Verified search by content 'language'.");
 
-  searchResult3 = await concept.search({
-    user: readerUser,
-    document: bookDoc,
-    criteria: "Charac",
-  }); // Partial tag match
-  console.log(
-    "Search result 3 (Charac tag):",
-    searchResult3.annotations.map((a) => a._id),
-  );
-  assertEquals(searchResult3.annotations.length, 1);
-  assertArrayIncludes(searchResult3.annotations.map((a) => a._id), [
-    annCharDesc,
-  ]);
-  console.log("Verified search by partial tag 'Charac'.");
-
-  // 7. User views all their annotations in the document (implicitly by searching with broad criteria or no criteria)
-  console.log(
-    `Step 7: ${readerUser} views all annotations in ${bookDoc} by searching for common term.`,
-  );
-  // Note: Searching with a very broad criteria that matches all or most annotations.
-  // In a real app, a dedicated query like '_getAllAnnotationsForDocument' might be used.
-  // Here, we can search for a common string or iterate over the documentViews' annotations array.
-  const docViewAfterAnnotations = await db.collection(
-    "Annotation.documentViews",
-  ).findOne({ _id: bookDoc });
-  assertExists(
-    docViewAfterAnnotations,
-    "Document view should exist after creating annotations.",
-  );
-  assertEquals(
-    docViewAfterAnnotations.annotations.length,
-    4,
-    "Document view should have all 4 annotations.",
-  );
-  assertArrayIncludes(docViewAfterAnnotations.annotations, [
-    annCharDesc,
-    annHighlightTheme,
-    annQuestion,
-    annNote,
-  ]);
-  console.log(
-    "Verified all annotations can be found/viewed directly from the document view.",
+      searchResult3 = await concept.search({
+        user: readerUser,
+        document: bookDoc,
+        criteria: "Charac",
+      }); // Partial tag match
+      console.log(
+        "Search result 3 (Charac tag):",
+        searchResult3.annotations.map((a) => a._id),
+      );
+      assertEquals(searchResult3.annotations.length, 1);
+      assertArrayIncludes(searchResult3.annotations.map((a) => a._id), [
+        annCharDesc,
+      ]);
+      console.log("Verified search by partial tag 'Charac'.");
+    },
   );
 
-  console.log("\nPrinciple successfully demonstrated!");
+  await logAndRunStep(
+    t,
+    `Step 7: ${readerUser} views all annotations in ${bookDoc} (by checking document view directly).`,
+    async () => {
+      const annCharDesc = (t as any).annCharDesc;
+      const annHighlightTheme = (t as any).annHighlightTheme;
+      const annQuestion = (t as any).annQuestion;
+      const annNote = (t as any).annNote;
+
+      const docViewAfterAnnotations = await db.collection(
+        "Annotation.documentViews",
+      ).findOne({ _id: bookDoc });
+      assertExists(
+        docViewAfterAnnotations,
+        "Document view should exist after creating annotations.",
+      );
+      assertEquals(
+        docViewAfterAnnotations.annotations.length,
+        4,
+        "Document view should have all 4 annotations.",
+      );
+      assertArrayIncludes(docViewAfterAnnotations.annotations, [
+        annCharDesc,
+        annHighlightTheme,
+        annQuestion,
+        annNote,
+      ]);
+      console.log(
+        "Verified all annotations can be found/viewed directly from the document view.",
+      );
+    },
+  );
+
+  console.log(`\n✅ Principle successfully demonstrated!`);
 
   await client.close();
 });

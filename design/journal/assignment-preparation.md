@@ -69,4 +69,4 @@
 		- [ ] 5-10 "interesting moments" + explanation
 
 #### Notes:
-- Save "interesting moments" by using ./ctx save and making a note in [the journal](design/journal/journal.md)
+- Save "interesting moments" by using ./ctx save and making a note in [the journal](Journal.md)

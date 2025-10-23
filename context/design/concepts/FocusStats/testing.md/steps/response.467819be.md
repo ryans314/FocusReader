@@ -1,3 +1,13 @@
+---
+timestamp: 'Thu Oct 23 2025 06:51:31 GMT-0400 (Eastern Daylight Time)'
+parent: '[[..\20251023_065131.c7edc880.md]]'
+content_id: 467819be25b27c8a26f18370a066963fabdb8276c8255b7a1e8d45160d601cf3
+---
+
+# response:
+
+```typescript
+// file: src/concepts/FocusStats/FocusStatsConcept.test.ts
 import {
   assertEquals,
   assertExists,
@@ -498,9 +508,7 @@ Deno.test("FocusStats Concept Tests", async (t) => {
         false,
         "SessionP2Id should NOT be in stats before ending.",
       );
-      console.log(
-        `   Stats verified: SessionP1Id included, SessionP2Id not. ✅`,
-      );
+      console.log(`   Stats verified: SessionP1Id included, SessionP2Id not. ✅`);
 
       console.log(`6. End the second reading session (${sessionP2Id})`);
       const endSession2Result = await focusStatsConcept.endSession({
@@ -541,11 +549,7 @@ Deno.test("FocusStats Concept Tests", async (t) => {
       const detailedSessions = getSessionsResult as Array<
         { focusSession: any }
       >;
-      console.log(
-        `   Detailed sessions: ${
-          JSON.stringify(detailedSessions.map((s) => s.focusSession._id))
-        }`,
-      );
+      console.log(`   Detailed sessions: ${JSON.stringify(detailedSessions.map(s => s.focusSession._id))}`);
       assertEquals(
         detailedSessions.length,
         2,
@@ -573,3 +577,4 @@ Deno.test("FocusStats Concept Tests", async (t) => {
 
   await client.close();
 });
+```
