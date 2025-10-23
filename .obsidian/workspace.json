@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/journal/Journal.md",
+                "file": "design/concepts/assignment-design-and-interesting-moments.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Journal"
+              "title": "assignment-design-and-interesting-moments"
             }
           }
         ],
@@ -212,8 +212,10 @@
       "bases:Create new base": false
     }
   },
-  "active": "9b42b4503c7d88ad",
+  "active": "de417feea4227a6b",
   "lastOpenFiles": [
+    "design/journal/Journal.md",
+    "design/concepts/assignment-design-and-interesting-moments.md",
     "design/concepts/TextSettings/test output.md",
     "design/concepts/TextSettings/testing.md",
     "context/design/concepts/TextSettings/testing.md/20251023_070539.5e916e58.md",
@@ -238,8 +240,6 @@
     "context/design/concepts/Library/testing.md/20251023_065517.63110046.md",
     "context/design/concepts/Library/testing.md/steps/response.bbe9637f.md",
     "context/design/concepts/Library/testing.md/20251023_065355.2ab83b93.md",
-    "context/design/concepts/Library/testing.md/steps/Prompt.0ca597d3.md",
-    "context/design/concepts/Library/testing.md/steps/file.79d9f402.md",
     "src/concepts/FocusStats/FocusStatsConcept.ts",
     "src/concepts/FocusStats/TempFocusStatsConcept.ts",
     "src/concepts/FocusStats/focusStatsConcept.ts",
