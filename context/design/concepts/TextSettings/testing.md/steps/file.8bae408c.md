@@ -1,5 +1,14 @@
+---
+timestamp: 'Thu Oct 23 2025 04:32:46 GMT-0400 (Eastern Daylight Time)'
+parent: '[[..\20251023_043246.f4380e77.md]]'
+content_id: 8bae408cf63ddee2295046d8f170c6ba0be545e3876dd2a786dbf02eae61be79
+---
+
+# file: src/TextSettings/TextSettingsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID, Empty } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // Declare collection prefix, use concept name
@@ -17,7 +26,7 @@ type Document = ID; // Assuming Document is also an external ID type
  *   a fontSize number
  *   a lineHeight number
  */
-export interface TextSettingsData {
+interface TextSettingsData {
   _id: ID; // Represents the ID of a specific TextSettings configuration
   font: string;
   fontSize: number;
@@ -66,9 +75,7 @@ export default class TextSettingsConcept {
   constructor(private readonly db: Db) {
     this.textSettingsCollection = this.db.collection(PREFIX + "textSettings");
     this.userDefaultsCollection = this.db.collection(PREFIX + "userDefaults");
-    this.documentCurrentsCollection = this.db.collection(
-      PREFIX + "documentCurrents",
-    );
+    this.documentCurrentsCollection = this.db.collection(PREFIX + "documentCurrents");
   }
 
   /**
@@ -85,15 +92,15 @@ export default class TextSettingsConcept {
   private isValidFont(font: string): boolean {
     // A basic check for valid HTML font strings.
     // In a real application, this would be more robust (e.g., checking against a list of safe fonts).
-    return typeof font === "string" && font.length > 0;
+    return typeof font === 'string' && font.length > 0;
   }
 
   private isValidFontSize(fontSize: number): boolean {
-    return typeof fontSize === "number" && fontSize > 0;
+    return typeof fontSize === 'number' && fontSize > 0;
   }
 
   private isValidLineHeight(lineHeight: number, fontSize: number): boolean {
-    return typeof lineHeight === "number" && lineHeight >= fontSize;
+    return typeof lineHeight === 'number' && lineHeight >= fontSize;
   }
 
   // --- Actions ---
@@ -133,14 +140,10 @@ export default class TextSettingsConcept {
       return { error: "Font size must be a positive number." };
     }
     if (!this.isValidLineHeight(lineHeight, fontSize)) {
-      return {
-        error: "Line height must be greater than or equal to font size.",
-      };
+      return { error: "Line height must be greater than or equal to font size." };
     }
 
-    const existingDefault = await this.userDefaultsCollection.findOne({
-      _id: user,
-    });
+    const existingDefault = await this.userDefaultsCollection.findOne({ _id: user });
     if (existingDefault) {
       return { error: `User ${user} already has default text settings.` };
     }
@@ -197,18 +200,12 @@ export default class TextSettingsConcept {
       return { error: "Font size must be a positive number." };
     }
     if (!this.isValidLineHeight(lineHeight, fontSize)) {
-      return {
-        error: "Line height must be greater than or equal to font size.",
-      };
+      return { error: "Line height must be greater than or equal to font size." };
     }
 
-    const existingCurrent = await this.documentCurrentsCollection.findOne({
-      _id: document,
-    });
+    const existingCurrent = await this.documentCurrentsCollection.findOne({ _id: document });
     if (existingCurrent) {
-      return {
-        error: `Document ${document} already has current text settings.`,
-      };
+      return { error: `Document ${document} already has current text settings.` };
     }
 
     // Effects
@@ -229,9 +226,7 @@ export default class TextSettingsConcept {
       return { settings: newSettingsId };
     } catch (e) {
       console.error("Error creating document settings:", e);
-      return {
-        error: "Failed to create document settings due to database error.",
-      };
+      return { error: "Failed to create document settings due to database error." };
     }
   }
 
@@ -255,9 +250,7 @@ export default class TextSettingsConcept {
     },
   ): Promise<Empty | { error: string }> {
     // Requires checks
-    const existingSettings = await this.textSettingsCollection.findOne({
-      _id: textSettingsId,
-    });
+    const existingSettings = await this.textSettingsCollection.findOne({ _id: textSettingsId });
     if (!existingSettings) {
       return { error: `TextSettings with ID ${textSettingsId} not found.` };
     }
@@ -268,9 +261,7 @@ export default class TextSettingsConcept {
       return { error: "Font size must be a positive number." };
     }
     if (!this.isValidLineHeight(lineHeight, fontSize)) {
-      return {
-        error: "Line height must be greater than or equal to font size.",
-      };
+      return { error: "Line height must be greater than or equal to font size." };
     }
 
     // Effects
@@ -301,13 +292,9 @@ export default class TextSettingsConcept {
     { user }: { user: User },
   ): Promise<{ settings: TextSettingsData }[] | { error: string }> {
     try {
-      const userDefault = await this.userDefaultsCollection.findOne({
-        _id: user,
-      });
+      const userDefault = await this.userDefaultsCollection.findOne({ _id: user });
       if (userDefault) {
-        const settings = await this.textSettingsCollection.findOne({
-          _id: userDefault.defaultTextSettingsId,
-        });
+        const settings = await this.textSettingsCollection.findOne({ _id: userDefault.defaultTextSettingsId });
         if (settings) {
           return [{ settings }];
         }
@@ -332,13 +319,9 @@ export default class TextSettingsConcept {
     { document }: { document: Document },
   ): Promise<{ settings: TextSettingsData }[] | { error: string }> {
     try {
-      const docCurrent = await this.documentCurrentsCollection.findOne({
-        _id: document,
-      });
+      const docCurrent = await this.documentCurrentsCollection.findOne({ _id: document });
       if (docCurrent) {
-        const settings = await this.textSettingsCollection.findOne({
-          _id: docCurrent.currentTextSettingsId,
-        });
+        const settings = await this.textSettingsCollection.findOne({ _id: docCurrent.currentTextSettingsId });
         if (settings) {
           return [{ settings }];
         }
@@ -363,9 +346,7 @@ export default class TextSettingsConcept {
     { textSettingsId }: { textSettingsId: ID },
   ): Promise<{ settings: TextSettingsData }[] | { error: string }> {
     try {
-      const settings = await this.textSettingsCollection.findOne({
-        _id: textSettingsId,
-      });
+      const settings = await this.textSettingsCollection.findOne({ _id: textSettingsId });
       if (settings) {
         return [{ settings }];
       }
@@ -376,3 +357,4 @@ export default class TextSettingsConcept {
     }
   }
 }
+```

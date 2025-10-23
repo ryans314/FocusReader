@@ -1,0 +1,5 @@
+- Changed font to a String (evaluated at front-end)
+- Added set of Users with a default TextSettings and set of Documents with current TextSettings
+	- Better separation of concerns, previously the text setting functionality was split between the Profile and Library concepts, since that's where the textSettings were stored. 
+- Removed the BionicEnabled flag, seems difficult to implement
+- 

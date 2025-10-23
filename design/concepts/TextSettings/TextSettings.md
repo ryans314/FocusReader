@@ -8,7 +8,7 @@
 
 [@concept-rubric](/design/background/detailed/concept-rubric.md)
 
-**concept** TextSettings \[User, Document, Font\]
+**concept** TextSettings \[User, Document\]
 
 **purpose** allow users to customize and set different text/display settings for each of their documents
 
@@ -16,10 +16,9 @@
 
 **state**  
 a set of TextSettings with:  
-- a font Font
+- a font String
 - a fontSize number  
 - a lineHeight number 
-- a locale User | Document
 
 a set of Users with:
 - a default TextSettings
@@ -29,13 +28,32 @@ a set of Documents with:
 
 **actions**  
 
-createSettings(font: Font, fontSize: Number, lineHeight: Number, locale: User | Document): (settings: TextSettings)  
-- **requires** there is not already a TextSettings with locale, and font is a valid font
+createUserSettings(font: String, fontSize: Number, lineHeight: Number, user: User): (settings: TextSettings)  
+- **requires** 
+	- user exists 
+	- there is not already a default TextSettings with user
+	- font is a valid HTML font string
+	- fontSize > 0
+	- lineHeight >= fontSize
 - **effects** 
-	- creates settings with font, fontSize, lineHeight, and locale
-	- If locale is a User, set's user's default to settings
-	- if locale is a Document, set document's current to settings
+	- Creates settings with font, fontSize, lineHeight
+	- Set's user's default to settings
 
-editSettings(textSettings: TextSettings, font: Font, fontSize: Number, lineHeight: Number): (settings: TextSettings)  
-- **requires** textSettings exists  
-- **effects** changes textSettings to have fontSize, lineHeight, and font
+createDocumentSettings(font: String, fontSize: Number, lineHeight: Number, : User): (settings: TextSettings)  
+- **requires**
+	- document exists 
+	- there is not already a current TextSettings with document
+	- font is a valid HTML font string
+	- fontSize > 0
+	- lineHeight >= fontSize
+- **effects** 
+	- Creates settings with font, fontSize, lineHeight
+	- set document's current to settings
+
+editSettings(textSettings: TextSettings, font: String, fontSize: Number, lineHeight: Number): (settings: TextSettings)  
+- **requires** 
+	- textSettings exists  
+	- font is a valid HTML font string
+	- fontSize > 0
+	- lineHeight >= fontSize
+- **effects** modifes textSettings to have fontSize, lineHeight, and font
