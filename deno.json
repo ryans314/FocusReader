@@ -1,9 +1,13 @@
 {
-    "imports": {
-        "@concepts/": "./src/concepts/",
-        "@utils/": "./src/utils/"
-    },
-    "tasks": {
-        "concepts": "deno run --allow-net --allow-read --allow-sys --allow-env src/concept_server.ts --port 8000 --baseUrl /api"
-    }
+  "imports": {
+    "@concepts/": "./src/concepts/",
+    "@utils/": "./src/utils/"
+  },
+  "npm": {
+    "bcryptjs": "2.4.3",
+    "mongodb": "6.8.0"
+  },
+  "tasks": {
+    "concepts": "deno run --allow-net --allow-read --allow-sys --allow-env src/concept_server.ts --port 8000 --baseUrl /api"
+  }
 }

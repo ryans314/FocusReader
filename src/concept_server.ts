@@ -1,3 +1,4 @@
+// import * as path from "https://deno.land/std@0.224.0/path/mod.ts";
 import { Hono } from "jsr:@hono/hono";
 import { getDb } from "@utils/database.ts";
 import { walk } from "jsr:@std/fs";
@@ -40,6 +41,7 @@ async function main() {
 
     const conceptName = entry.name;
     const conceptFilePath = `${entry.path}/${conceptName}Concept.ts`;
+    // const conceptFilePath = path.join(entry.path, `${conceptName}Concept.ts`);
 
     try {
       const modulePath = toFileUrl(Deno.realPathSync(conceptFilePath)).href;

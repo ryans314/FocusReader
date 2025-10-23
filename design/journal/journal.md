@@ -17,4 +17,15 @@
 		- I'm surprised it can't use the concept spec itself as enough of a spec that it can generate test cases off of that, and that it actually has to fake-implement the relevant classes and functions in order to generate code
 		- Perhaps it's because of the way testing-concepts is written, or perhaps the ai doesn't want to write code that isn't immediately runnable
 		- I suppose I could have drilled it harder on not implementing the thing, and using the concept as a spec, but eh that's slow.
-	
+3. Storing plaintext passwords
+	- [Context](context/design/concepts/Profile/implementation.md/20251023_023448.abcfdcb0.md)
+	- What happened:
+		- I used the LLM to implement the Profile concept, which has a username and password, and it stored plaintext passwords in the database. Additionally, it stated multiple times that this should never be done in production code, as it is very dangerous
+	- Why it's interesting
+		- Although a direct transliteration of the concept would dictate the LLM to store plaintext passwords (it seems mongo doesn't have an inherent account/user/password system like django), the fact that it acknowledged the danger but decided to do it anyway was interesting. I'm not sure what it thinks it's doing, if not generating production code. 
+4.  Deno.test.beforeEach()
+	- [Context](context/design/concepts/Profile/implementation.md/20251023_025632.16ad8892.md)
+	- What happened: 
+		- The LLM INSISTED (many, many times) that Deno.test.beforeEach(fn) runs before each test.step(), which is just objectively not true. 
+		- Even after telling it that it may be wrong, linking to the appropriate deno documentation, it insisted that it was right. 
+	- Why it's interesting
