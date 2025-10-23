@@ -3,275 +3,175 @@
 
 [@concept-specifications](../../background/concept-specifications.md)
 
-[@implementing-concepts](../../background/implementing-concepts.md)
-
 [@Annotation](Annotation.md)
+
+[@implementing-concepts](../../background/implementing-concepts.md)
 
 # Implement: Annotation
 
+I've changed the concept a few times, so completely disregard your previous implementations of Annotation when making this implementation. 
 # response:
 
-To implement the `Annotation` concept in TypeScript, we'll follow the provided guidelines for concept design and MongoDB integration.
 
-First, here's the specification for the `Annotation` concept:
+# response:
 
-**concept** Annotation \[User, Document, Location]
-
-**purpose** allow users to create annotations within documents and search amongst their annotations
-
-**principle** When users read a document, they can create and view highlighting or text annotations in the document. Users can label annotations with tags. Users can also search for annotations in a document with specific keywords or about certain ideas.
-
-**state**\
-a set of Annotations with:
-
-*   a creator User
-*   a document Document
-*   an optional color String
-*   an optional content String
-*   a location Location
-*   a tags set of Tags
-
-a set of Tags with:
-
-*   a creator User
-*   a title String
-
-a set of Documents with:
-
-*   an annotations set of Annotations
-*   a creator User
-
-**actions**
-
-createTag(creator: User, title: String): (tag: Tag)
-
-*   **requires** a tag with user and title does not already exist
-*   **effects** creates a tag with title
-
-createAnnotation(creator: User, document: Document, color: String, content: String, location: Location, tags: List\[Tag]): (annotation: Annotation)
-
-*   **requires**
-    *   document exists, and has creator=creator (in this concept's `documents` state)
-    *   location exists and is well-defined
-    *   color is either a valid HTML color, or omitted. At least one of color and content must not be omitted
-*   **effects**
-    *   creates and adds annotation with creator, document, color, content, location, and tags to the set of Annotations.
-    *   Adds annotation to the document's set of annotations
-
-deleteAnnotation(user: User, annotation: Annotation)
-
-*   **requires** annotation exists and has creator=user
-*   **effects** removes annotation from all sets of Annotations
-
-updateAnnotation(user: User, annotation: Annotation, newColor: String, newContent: String, newLocation: Location, newTags: List\[Tag]): (annotation: Annotation)
-
-*   **requires** annotation has creator=user, newColor (if provided) is a valid HTML color. Any of newColor, newContent, newLocation, and newTags may be omitted.
-*   **effects** modifies annotation to have color=newColor, content=newContent, location=newLocation, tags=newTags (for each attribute that is not omitted)
-
-search(user: User, document: Document, criteria: String): (annotations: List\[Annotations\\])
-
-*   **requires** document exists (in this concept's `documents` state)
-*   **effects** returns a list of annotations with creator=user in the document that have content or tags matching criteria
-
-searchLLM(user: User, document: Document, description: String, llm: GeminiLLM): (annotations: List\[Annotations])
-
-*   **requires** document and llm exist (in this concept's `documents` state)
-*   **effects** uses llm to identify and return annotations with creator=user in the document that fit the given description
-
-**notes:**
-
-*   Location is a generic representation of a location within a document, Document is a generic representation of a document, and color is a generic representation of a color
-*   I'm not sure exactly how it would work, but depending on the generic Document passed in, there would be an implied location representation associated with it. For example, .epub files (using a library) can represent text location as an index, whereas pdfs treat the entire document as an image (x-y plane for location).
-
----
-
-# file: src/concepts/AnnotationConcept.ts
+Here's the implementation of the `Annotation` concept, adhering to the provided guidelines for Concept Design and MongoDB translation.
 
 ```typescript
+// file: src/Annotation/AnnotationConcept.ts
+
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
-// Declare collection prefix for MongoDB, using the concept name
-const PREFIX = "Annotation" + ".";
+const PREFIX = "Annotation" + "."; // Collection prefix for MongoDB
 
-// Generic types for this concept, represented as branded IDs
+// Generic types defined by the concept's parameters
 type User = ID;
 type Document = ID;
-type Location = ID; // Generic representation of a location within a document
-type Tag = ID;
-type Annotation = ID;
+
+// Internal types managed by this concept
+type AnnotationID = ID;
+type TagID = ID;
 
 /**
- * Interface for the 'Tags' collection documents.
- * a set of Tags with:
- *   a creator User
- *   a title String
+ * Interface for the 'Annotations' collection.
+ * Corresponds to "a set of Annotations with..." in the concept state.
  */
-interface TagsDoc {
-  _id: Tag;
-  creator: User;
-  title: string;
+interface AnnotationDoc {
+  _id: AnnotationID;
+  creator: User; // Reference to external User ID
+  document: Document; // Reference to external Document ID
+  color?: string; // Optional HTML color string
+  content?: string; // Optional textual content of the annotation
+  location: string; // Canonical Fragment Identifier (CFI) string
+  tags: TagID[]; // Array of Tag IDs, representing the set of tags
 }
 
 /**
- * Interface for the 'Documents' collection documents managed by this concept.
- * a set of Documents with:
- *   an annotations set of Annotations
- *   a creator User
- *
- * This collection stores minimal information about documents relevant to annotations,
- * specifically their ID, creator, and associated annotations, rather than full document content.
+ * Interface for the 'Tags' collection.
+ * Corresponds to "a set of Tags with..." in the concept state.
  */
-interface DocumentsDoc {
-  _id: Document;
-  creator: User;
-  annotations: Annotation[];
+interface TagDoc {
+  _id: TagID;
+  creator: User; // Reference to external User ID (creator of this specific tag)
+  title: string; // The title/name of the tag
 }
 
 /**
- * Interface for the 'Annotations' collection documents.
- * a set of Annotations with:
- *   a creator User
- *   a document Document
- *   an optional color String
- *   an optional content String
- *   a location Location
- *   a tags set of Tags
+ * Interface for the 'Documents' collection, representing the Annotation concept's
+ * specific view and state relevant to documents. This view includes which annotations
+ * belong to a document and which user created the document (from the Annotation concept's
+ * perspective, used for authorization).
  */
-interface AnnotationsDoc {
-  _id: Annotation;
-  creator: User;
-  document: Document;
-  color?: string; // Optional
-  content?: string; // Optional
-  location: Location;
-  tags: Tag[]; // Array of Tag IDs
+interface DocumentViewDoc {
+  _id: Document; // Reference to external Document ID
+  annotations: AnnotationID[]; // Array of Annotation IDs associated with this document
+  creator: User; // The creator of this document, as known by this concept
 }
 
-/**
- * Mock interface for a Large Language Model (LLM) like Gemini.
- * This is a placeholder; a real implementation would integrate with an actual LLM service.
- */
-interface GeminiLLM {
-  /**
-   * Hypothetical method for an LLM to search for annotations based on a description.
-   * In a real scenario, `documentContent` would be fetched from a dedicated Document concept.
-   */
-  searchAnnotations(
-    documentContent: string,
-    description: string,
-    existingAnnotations: AnnotationsDoc[]
-  ): Promise<AnnotationsDoc[]>;
-}
-
-/**
- * @concept Annotation
- * @purpose allow users to create annotations within documents and search amongst their annotations
- * @principle When users read a document, they can create and view highlighting or text annotations in the document. Users can label annotations with tags. Users can also search for annotations in a document with specific keywords or about certain ideas.
- */
 export default class AnnotationConcept {
-  tags: Collection<TagsDoc>;
-  documents: Collection<DocumentsDoc>;
-  annotations: Collection<AnnotationsDoc>;
+  private annotations: Collection<AnnotationDoc>;
+  private tags: Collection<TagDoc>;
+  private documentViews: Collection<DocumentViewDoc>;
 
   constructor(private readonly db: Db) {
-    this.tags = this.db.collection(PREFIX + "tags");
-    this.documents = this.db.collection(PREFIX + "documents");
     this.annotations = this.db.collection(PREFIX + "annotations");
+    this.tags = this.db.collection(PREFIX + "tags");
+    this.documentViews = this.db.collection(PREFIX + "documentViews");
   }
 
   /**
    * createTag(creator: User, title: String): (tag: Tag)
    *
-   * @requires a tag with user and title does not already exist
-   * @effects creates a tag with title for the creator and returns its ID
+   * **requires** a tag with user and title does not already exist
+   *
+   * **effects** creates a tag with title
    */
-  async createTag({
-    creator,
-    title,
-  }: {
-    creator: User;
-    title: string;
-  }): Promise<{ tag: Tag } | { error: string }> {
-    // Precondition: check if tag with user and title already exists
+  async createTag(
+    { creator, title }: { creator: User; title: string },
+  ): Promise<{ tag?: TagID; error?: string }> {
+    // Check if a tag with the given creator and title already exists
     const existingTag = await this.tags.findOne({ creator, title });
     if (existingTag) {
-      return { error: `Tag with title '${title}' for creator '${creator}' already exists.` };
+      return { error: "A tag with this creator and title already exists." };
     }
 
-    const newTagId = freshID() as Tag;
-    const newTag: TagsDoc = {
+    const newTagId = freshID() as TagID;
+    const newTagDoc: TagDoc = {
       _id: newTagId,
       creator,
       title,
     };
-    await this.tags.insertOne(newTag);
+
+    await this.tags.insertOne(newTagDoc);
     return { tag: newTagId };
   }
 
   /**
-   * createAnnotation(creator: User, document: Document, color?: String, content?: String, location: Location, tags: List[Tag]): (annotation: Annotation)
+   * createAnnotation(creator: User, document: Document, color: String, content: String, location: String, tags: List[Tag]): (annotation: Annotation)
    *
-   * @requires
-   *   - document exists, and has creator=creator (in this concept's documents collection)
-   *   - location exists and is well-defined (non-null/undefined)
-   *   - color (if provided) is either a valid HTML color, or omitted. (Assuming valid if provided for simplicity, no actual validation here)
-   *   - At least one of color and content must not be omitted
-   * @effects
+   * **requires**
+   *   - document exists (in Annotation concept's view), and has creator=creator
+   *   - location exists and is a well-defined CFI (no programmatic validation here; assumed by external caller for CFI format)
+   *   - color is either a valid HTML color, or omitted. At least one of color and content must not be omitted
+   *
+   * **effects**
    *   - creates and adds annotation with creator, document, color, content, location, and tags to the set of Annotations.
    *   - Adds annotation to the document's set of annotations
    */
-  async createAnnotation({
-    creator,
-    document,
-    color,
-    content,
-    location,
-    tags,
-  }: {
-    creator: User;
-    document: Document;
-    color?: string;
-    content?: string;
-    location: Location;
-    tags?: Tag[]; // Make tags optional in input as it can be an empty list
-  }): Promise<{ annotation: Annotation } | { error: string }> {
-    // Precondition: document exists and has creator=creator in THIS concept's documents collection
-    const targetDocument = await this.documents.findOne({ _id: document, creator });
-    if (!targetDocument) {
-      return { error: `Document '${document}' either does not exist or is not associated with creator '${creator}' in this concept.` };
-    }
-
-    // Precondition: location is well-defined (checking for non-null/undefined)
-    if (!location) {
-      return { error: "Location must be well-defined (non-null/undefined)." };
-    }
-
-    // Precondition: At least one of color or content must not be omitted
-    if (!color && !content) {
-      return { error: "At least one of 'color' or 'content' must be provided for the annotation." };
-    }
-
-    // (Skipping detailed HTML color validation for 'color' property for brevity)
-
-    const newAnnotationId = freshID() as Annotation;
-    const newAnnotation: AnnotationsDoc = {
-      _id: newAnnotationId,
+  async createAnnotation(
+    {
       creator,
       document,
       color,
       content,
       location,
-      tags: tags || [], // Ensure tags is an array, even if omitted or undefined in input
+      tags,
+    }: {
+      creator: User;
+      document: Document;
+      color?: string;
+      content?: string;
+      location: string;
+      tags: TagID[]; // List[Tag] maps to an array of TagIDs
+    },
+  ): Promise<{ annotation?: AnnotationID; error?: string }> {
+    // Requirement 1: Check if the document (in Annotation concept's view) exists and is owned by the creator
+    const docView = await this.documentViews.findOne({ _id: document });
+    if (!docView || docView.creator !== creator) {
+      return {
+        error:
+          "Document does not exist in Annotation concept's view or is not owned by the creator.",
+      };
+    }
+
+    // Requirement 3: At least one of color and content must not be omitted
+    if (color === undefined && content === undefined) {
+      return { error: "Either color or content must be provided." };
+    }
+
+    // A more robust implementation would validate 'location' as a CFI and 'color' as a valid HTML color.
+    // At the concept specification level, these are often assumed or handled by presentation logic.
+
+    const newAnnotationId = freshID() as AnnotationID;
+    const newAnnotationDoc: AnnotationDoc = {
+      _id: newAnnotationId,
+      creator,
+      document,
+      location,
+      tags: tags || [], // Ensure tags is an array, even if empty/null from input
+      ...(color !== undefined && { color }), // Conditionally add color if provided
+      ...(content !== undefined && { content }), // Conditionally add content if provided
     };
 
-    await this.annotations.insertOne(newAnnotation);
+    await this.annotations.insertOne(newAnnotationDoc);
 
-    // Effect: Add annotation to the document's set of annotations
-    await this.documents.updateOne(
+    // Update the document's view to include this new annotation
+    // Since docView exists per the precondition, we just update it.
+    await this.documentViews.updateOne(
       { _id: document },
-      { $addToSet: { annotations: newAnnotationId } }
+      { $addToSet: { annotations: newAnnotationId } }, // $addToSet ensures no duplicate annotation IDs
     );
 
     return { annotation: newAnnotationId };
@@ -280,196 +180,503 @@ export default class AnnotationConcept {
   /**
    * deleteAnnotation(user: User, annotation: Annotation)
    *
-   * @requires annotation exists and has creator=user
-   * @effects removes annotation from the 'annotations' collection and from the document's annotations list
+   * **requires** annotation exists and has creator=user
+   *
+   * **effects** removes annotation from all sets of Annotations
    */
-  async deleteAnnotation({
-    user,
-    annotation,
-  }: {
-    user: User;
-    annotation: Annotation;
-  }): Promise<Empty | { error: string }> {
-    // Precondition: annotation exists and has creator=user
-    const targetAnnotation = await this.annotations.findOne({
-      _id: annotation,
-      creator: user,
-    });
-    if (!targetAnnotation) {
-      return { error: `Annotation '${annotation}' either does not exist or does not belong to user '${user}'.` };
+  async deleteAnnotation(
+    { user, annotation }: { user: User; annotation: AnnotationID },
+  ): Promise<Empty | { error: string }> {
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
+    if (!existingAnnotation) {
+      return { error: "Annotation not found." };
+    }
+    if (existingAnnotation.creator !== user) {
+      return { error: "User is not the creator of this annotation." };
     }
 
-    // Effect: removes annotation from the annotations collection
     await this.annotations.deleteOne({ _id: annotation });
 
-    // Effect: remove annotation from the document's annotations list
-    await this.documents.updateOne(
-      { _id: targetAnnotation.document },
-      { $pull: { annotations: annotation } }
+    // Remove annotation from the document's view
+    await this.documentViews.updateOne(
+      { _id: existingAnnotation.document },
+      { $pull: { annotations: annotation } }, // $pull removes the annotation ID from the array
     );
 
     return {};
   }
 
   /**
-   * updateAnnotation(user: User, annotation: Annotation, newColor?: String, newContent?: String, newLocation?: Location, newTags?: List[Tag]): (annotation: Annotation)
+   * updateAnnotation(user: User, annotation: Annotation, newColor: String, newContent: String, newLocation: String, newTags: List[Tag]): (annotation: Annotation)
    *
-   * @requires annotation has creator=user, newColor (if provided) is a valid HTML color. Any of newColor, newContent, newLocation, and newTags may be omitted.
-   * @effects modifies annotation to have color=newColor, content=newContent, location=newLocation, tags=newTags (for each attribute that is not omitted); returns the updated annotation ID
+   * **requires** annotation has creator=user, newColor (if provided) is a valid HTML color. Any of newColor, newContent, newLocation, and newTags may be omitted.
+   *
+   * **effects** modifies annotation to have color=newColor, content=newContent, location=newLocation, tags=newTags (for each attribute that is not omitted)
    */
-  async updateAnnotation({
-    user,
-    annotation,
-    newColor,
-    newContent,
-    newLocation,
-    newTags,
-  }: {
-    user: User;
-    annotation: Annotation;
-    newColor?: string | null; // Allow null to explicitly remove color
-    newContent?: string | null; // Allow null to explicitly remove content
-    newLocation?: Location;
-    newTags?: Tag[];
-  }): Promise<{ annotation: Annotation } | { error: string }> {
-    // Precondition: annotation has creator=user
-    const targetAnnotation = await this.annotations.findOne({
-      _id: annotation,
-      creator: user,
-    });
-    if (!targetAnnotation) {
-      return { error: `Annotation '${annotation}' either does not exist or does not belong to user '${user}'.` };
+  async updateAnnotation(
+    {
+      user,
+      annotation,
+      newColor,
+      newContent,
+      newLocation,
+      newTags,
+    }: {
+      user: User;
+      annotation: AnnotationID;
+      newColor?: string;
+      newContent?: string;
+      newLocation?: string;
+      newTags?: TagID[]; // List[Tag] maps to an array of TagIDs
+    },
+  ): Promise<{ annotation?: AnnotationID; error?: string }> {
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
+    if (!existingAnnotation) {
+      return { error: "Annotation not found." };
+    }
+    if (existingAnnotation.creator !== user) {
+      return { error: "User is not the creator of this annotation." };
     }
 
-    // (Skipping detailed HTML color validation for 'newColor' for brevity)
+    const updateDoc: Partial<AnnotationDoc> = {};
+    if (newColor !== undefined) {
+      // Add validation for HTML color if needed, currently assumes input is valid if present
+      updateDoc.color = newColor;
+    }
+    if (newContent !== undefined) {
+      updateDoc.content = newContent;
+    }
+    if (newLocation !== undefined) {
+      updateDoc.location = newLocation;
+    }
+    if (newTags !== undefined) {
+      updateDoc.tags = newTags;
+    }
 
-    const updateFields: Partial<AnnotationsDoc> = {};
-    if (newColor !== undefined) updateFields.color = newColor === null ? undefined : newColor;
-    if (newContent !== undefined) updateFields.content = newContent === null ? undefined : newContent;
-    if (newLocation !== undefined) updateFields.location = newLocation;
-    if (newTags !== undefined) updateFields.tags = newTags;
-
-    if (Object.keys(updateFields).length === 0) {
+    if (Object.keys(updateDoc).length === 0) {
       return { error: "No fields provided for update." };
     }
 
-    // Precondition check: At least one of color or content must not be omitted *after* update
-    const effectiveColor = updateFields.color !== undefined ? updateFields.color : targetAnnotation.color;
-    const effectiveContent = updateFields.content !== undefined ? updateFields.content : targetAnnotation.content;
-    if (!effectiveColor && !effectiveContent) {
-        return { error: "Update would result in both 'color' and 'content' being omitted. At least one must be present." };
-    }
-
-    await this.annotations.updateOne({ _id: annotation }, { $set: updateFields });
+    await this.annotations.updateOne(
+      { _id: annotation },
+      { $set: updateDoc },
+    );
 
     return { annotation };
   }
 
   /**
-   * search(user: User, document: Document, criteria: String): (annotations: List[Annotations])
+   * search(user: User, document: Document, criteria: String): (annotations: List[Annotations\])
    *
-   * @requires document exists (in this concept's documents state)
-   * @effects returns a list of annotations with creator=user in the document that have content or tags matching criteria
+   * **requires** document exists (in Annotation concept's view)
+   *
+   * **effects** returns a list of annotations with creator=user in the document that have content or tags matching criteria
+   *
+   * Queries MUST return an array of dictionaries.
    */
-  async search({
-    user,
-    document,
-    criteria,
-  }: {
-    user: User;
-    document: Document;
-    criteria: string;
-  }): Promise<{ annotations: AnnotationsDoc[] } | { error: string }> {
-    // Precondition: document exists in this concept's documents collection
-    const targetDocument = await this.documents.findOne({ _id: document });
-    if (!targetDocument) {
-      return { error: `Document '${document}' does not exist in this concept.` };
+  async search(
+    { user, document, criteria }: { user: User; document: Document; criteria: string },
+  ): Promise<{ annotations: AnnotationDoc[] | []; error?: string }> {
+    // Requirement 1: Check if the document (in Annotation concept's view) exists
+    const docView = await this.documentViews.findOne({ _id: document });
+    if (!docView) {
+      return { error: "Document not found in Annotation concept's view." };
     }
 
-    const searchRegex = new RegExp(criteria, "i"); // Case-insensitive search for content
+    // Find tags that match the criteria for the given user
+    const matchingTags = await this.tags.find({
+      creator: user,
+      title: { $regex: criteria, $options: "i" }, // Case-insensitive regex search
+    }).project({ _id: 1 }).toArray(); // Only retrieve _id for matching
+    const matchingTagIds = matchingTags.map((tag) => tag._id);
 
-    // Find tags whose title matches the criteria, for the given user
-    const matchingTags = await this.tags.find({ creator: user, title: { $regex: searchRegex } }).project({_id: 1}).toArray();
-    const matchingTagIds = matchingTags.map(tag => tag._id);
+    // Build the query to find annotations matching either content or tags
+    const query = {
+      creator: user,
+      document: document,
+      $or: [
+        { content: { $regex: criteria, $options: "i" } }, // Case-insensitive regex search in content
+        { tags: { $in: matchingTagIds } }, // Search by matching tag IDs
+      ],
+    };
 
-    // Find annotations that match the creator and document, and either content or tags match criteria
-    const results = await this.annotations.find({
-        creator: user,
-        document: document,
-        $or: [
-            { content: { $regex: searchRegex } }, // Match criteria in content
-            { tags: { $in: matchingTagIds } }    // Match criteria in associated tag titles
-        ]
-    }).toArray();
+    const foundAnnotations = await this.annotations.find(query).toArray();
 
-    return { annotations: results };
+    return { annotations: foundAnnotations };
+  }
+
+  // --- Utility Actions (not part of concept spec, but needed for setup/testing external entities) ---
+  // A sync would typically call these to populate external generic types
+  async _registerDocument(
+    { documentId, creatorId }: { documentId: Document; creatorId: User },
+  ): Promise<Empty | { error: string }> {
+    const existingDocView = await this.documentViews.findOne({ _id: documentId });
+    if (existingDocView) {
+      return { error: "Document already registered in Annotation concept's view." };
+    }
+    await this.documentViews.insertOne({ _id: documentId, annotations: [], creator: creatorId });
+    return {};
+  }
+
+  async _deleteDocumentView(
+    { documentId }: { documentId: Document },
+  ): Promise<Empty | { error: string }> {
+    const docView = await this.documentViews.findOne({ _id: documentId });
+    if (!docView) {
+      return { error: "Document view not found." };
+    }
+    // Also delete all annotations associated with this document
+    await this.annotations.deleteMany({ document: documentId });
+    await this.documentViews.deleteOne({ _id: documentId });
+    return {};
+  }
+}
+```
+
+# Prompt: only 1 error, an issue with the error return for async search. See below for the exact segment and error:
+
+```
+async search(
+
+    { user, document, criteria }: { user: User; document: Document; criteria: string },
+
+  ): Promise<{ annotations: AnnotationDoc[] | []; error?: string }> {
+
+    // Requirement 1: Check if the document (in Annotation concept's view) exists
+
+    const docView = await this.documentViews.findOne({ _id: document });
+
+    if (!docView) {
+
+      return { error: "Document not found in Annotation concept's view." };
+
+    }
+```
+
+
+The return line has the following error:
+
+```
+Property 'annotations' is missing in type '{ error: string; }' but required in type '{ annotations: [] | AnnotationDoc[]; error?: string | undefined; }'.deno-ts(2741)
+```
+# response:
+
+You're absolutely right! The TypeScript error indicates that the return type for your `search` method's `Promise` requires an `annotations` property, even when an error occurs.
+
+Here's the corrected `search` method, addressing that specific type issue:
+
+```typescript
+// file: src/Annotation/AnnotationConcept.ts
+
+import { Collection, Db } from "npm:mongodb";
+import { Empty, ID } from "@utils/types.ts";
+import { freshID } from "@utils/database.ts";
+
+const PREFIX = "Annotation" + "."; // Collection prefix for MongoDB
+
+// Generic types defined by the concept's parameters
+type User = ID;
+type Document = ID;
+
+// Internal types managed by this concept
+type AnnotationID = ID;
+type TagID = ID;
+
+/**
+ * Interface for the 'Annotations' collection.
+ * Corresponds to "a set of Annotations with..." in the concept state.
+ */
+interface AnnotationDoc {
+  _id: AnnotationID;
+  creator: User; // Reference to external User ID
+  document: Document; // Reference to external Document ID
+  color?: string; // Optional HTML color string
+  content?: string; // Optional textual content of the annotation
+  location: string; // Canonical Fragment Identifier (CFI) string
+  tags: TagID[]; // Array of Tag IDs, representing the set of tags
+}
+
+/**
+ * Interface for the 'Tags' collection.
+ * Corresponds to "a set of Tags with..." in the concept state.
+ */
+interface TagDoc {
+  _id: TagID;
+  creator: User; // Reference to external User ID (creator of this specific tag)
+  title: string; // The title/name of the tag
+}
+
+/**
+ * Interface for the 'Documents' collection, representing the Annotation concept's
+ * specific view and state relevant to documents. This view includes which annotations
+ * belong to a document and which user created the document (from the Annotation concept's
+ * perspective, used for authorization).
+ */
+interface DocumentViewDoc {
+  _id: Document; // Reference to external Document ID
+  annotations: AnnotationID[]; // Array of Annotation IDs associated with this document
+  creator: User; // The creator of this document, as known by this concept
+}
+
+export default class AnnotationConcept {
+  private annotations: Collection<AnnotationDoc>;
+  private tags: Collection<TagDoc>;
+  private documentViews: Collection<DocumentViewDoc>;
+
+  constructor(private readonly db: Db) {
+    this.annotations = this.db.collection(PREFIX + "annotations");
+    this.tags = this.db.collection(PREFIX + "tags");
+    this.documentViews = this.db.collection(PREFIX + "documentViews");
   }
 
   /**
-   * searchLLM(user: User, document: Document, description: String, llm: GeminiLLM): (annotations: List[Annotations])
+   * createTag(creator: User, title: String): (tag: Tag)
    *
-   * @requires document and llm exist (document in this concept's documents state)
-   * @effects uses llm to identify and return annotations with creator=user in the document that fit the given description
+   * **requires** a tag with user and title does not already exist
+   *
+   * **effects** creates a tag with title
    */
-  async searchLLM({
-    user,
-    document,
-    description,
-    llm,
-  }: {
-    user: User;
-    document: Document;
-    description: string;
-    llm: GeminiLLM;
-  }): Promise<{ annotations: AnnotationsDoc[] } | { error: string }> {
-    // Precondition: document exists in this concept's documents collection
-    const targetDocument = await this.documents.findOne({ _id: document });
-    if (!targetDocument) {
-      return { error: `Document '${document}' does not exist in this concept.` };
+  async createTag(
+    { creator, title }: { creator: User; title: string },
+  ): Promise<{ tag?: TagID; error?: string }> {
+    // Check if a tag with the given creator and title already exists
+    const existingTag = await this.tags.findOne({ creator, title });
+    if (existingTag) {
+      return { error: "A tag with this creator and title already exists." };
     }
 
-    // Precondition: llm instance is provided
-    if (!llm) {
-      return { error: "LLM instance is not provided." };
-    }
+    const newTagId = freshID() as TagID;
+    const newTagDoc: TagDoc = {
+      _id: newTagId,
+      creator,
+      title,
+    };
 
-    // In a real application, the LLM would need access to the actual document content.
-    // For this mock implementation, we'll pass an empty string as documentContent
-    // and rely on existing annotations as context for the LLM.
-    const allUserDocumentAnnotations = await this.annotations.find({ creator: user, document: document }).toArray();
-
-    try {
-      const llmIdentifiedAnnotations = await llm.searchAnnotations(
-        "", // Placeholder for actual document content (requires a Document concept)
-        description,
-        allUserDocumentAnnotations
-      );
-      return { annotations: llmIdentifiedAnnotations };
-    } catch (e) {
-      console.error("LLM search failed:", e);
-      return { error: `LLM search failed: ${e.message}` };
-    }
+    await this.tags.insertOne(newTagDoc);
+    return { tag: newTagId };
   }
 
-  // --- Internal/Utility Action to manage Document lifecycle within this concept ---
   /**
-   * _registerDocument(documentId: Document, creator: User): Empty
-   * This utility action is used to register a document and its creator within this Annotation concept's state.
-   * It's crucial for `createAnnotation`'s precondition that a document 'exists and has creator=creator'.
-   * This action would typically be invoked by a synchronization from an external Document concept
-   * when a document is created or associated with a user in the larger application.
+   * createAnnotation(creator: User, document: Document, color: String, content: String, location: String, tags: List[Tag]): (annotation: Annotation)
    *
-   * @requires documentId does not already exist with a different creator.
-   * @effects ensures a document entry exists for the given ID and creator in this concept's state.
+   * **requires**
+   *   - document exists (in Annotation concept's view), and has creator=creator
+   *   - location exists and is a well-defined CFI (no programmatic validation here; assumed by external caller for CFI format)
+   *   - color is either a valid HTML color, or omitted. At least one of color and content must not be omitted
+   *
+   * **effects**
+   *   - creates and adds annotation with creator, document, color, content, location, and tags to the set of Annotations.
+   *   - Adds annotation to the document's set of annotations
    */
-  async _registerDocument({ documentId, creator }: { documentId: Document; creator: User }): Promise<Empty | { error: string }> {
-    const existingDoc = await this.documents.findOne({ _id: documentId });
-    if (existingDoc && existingDoc.creator !== creator) {
-      return { error: `Document '${documentId}' is already registered with a different creator.` };
+  async createAnnotation(
+    {
+      creator,
+      document,
+      color,
+      content,
+      location,
+      tags,
+    }: {
+      creator: User;
+      document: Document;
+      color?: string;
+      content?: string;
+      location: string;
+      tags: TagID[]; // List[Tag] maps to an array of TagIDs
+    },
+  ): Promise<{ annotation?: AnnotationID; error?: string }> {
+    // Requirement 1: Check if the document (in Annotation concept's view) exists and is owned by the creator
+    const docView = await this.documentViews.findOne({ _id: document });
+    if (!docView || docView.creator !== creator) {
+      return {
+        error:
+          "Document does not exist in Annotation concept's view or is not owned by the creator.",
+      };
     }
-    if (!existingDoc) {
-      await this.documents.insertOne({ _id: documentId, creator, annotations: [] });
+
+    // Requirement 3: At least one of color and content must not be omitted
+    if (color === undefined && content === undefined) {
+      return { error: "Either color or content must be provided." };
     }
+
+    // A more robust implementation would validate 'location' as a CFI and 'color' as a valid HTML color.
+    // At the concept specification level, these are often assumed or handled by presentation logic.
+
+    const newAnnotationId = freshID() as AnnotationID;
+    const newAnnotationDoc: AnnotationDoc = {
+      _id: newAnnotationId,
+      creator,
+      document,
+      location,
+      tags: tags || [], // Ensure tags is an array, even if empty/null from input
+      ...(color !== undefined && { color }), // Conditionally add color if provided
+      ...(content !== undefined && { content }), // Conditionally add content if provided
+    };
+
+    await this.annotations.insertOne(newAnnotationDoc);
+
+    // Update the document's view to include this new annotation
+    // Since docView exists per the precondition, we just update it.
+    await this.documentViews.updateOne(
+      { _id: document },
+      { $addToSet: { annotations: newAnnotationId } }, // $addToSet ensures no duplicate annotation IDs
+    );
+
+    return { annotation: newAnnotationId };
+  }
+
+  /**
+   * deleteAnnotation(user: User, annotation: Annotation)
+   *
+   * **requires** annotation exists and has creator=user
+   *
+   * **effects** removes annotation from all sets of Annotations
+   */
+  async deleteAnnotation(
+    { user, annotation }: { user: User; annotation: AnnotationID },
+  ): Promise<Empty | { error: string }> {
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
+    if (!existingAnnotation) {
+      return { error: "Annotation not found." };
+    }
+    if (existingAnnotation.creator !== user) {
+      return { error: "User is not the creator of this annotation." };
+    }
+
+    await this.annotations.deleteOne({ _id: annotation });
+
+    // Remove annotation from the document's view
+    await this.documentViews.updateOne(
+      { _id: existingAnnotation.document },
+      { $pull: { annotations: annotation } }, // $pull removes the annotation ID from the array
+    );
+
+    return {};
+  }
+
+  /**
+   * updateAnnotation(user: User, annotation: Annotation, newColor: String, newContent: String, newLocation: String, newTags: List[Tag]): (annotation: Annotation)
+   *
+   * **requires** annotation has creator=user, newColor (if provided) is a valid HTML color. Any of newColor, newContent, newLocation, and newTags may be omitted.
+   *
+   * **effects** modifies annotation to have color=newColor, content=newContent, location=newLocation, tags=newTags (for each attribute that is not omitted)
+   */
+  async updateAnnotation(
+    {
+      user,
+      annotation,
+      newColor,
+      newContent,
+      newLocation,
+      newTags,
+    }: {
+      user: User;
+      annotation: AnnotationID;
+      newColor?: string;
+      newContent?: string;
+      newLocation?: string;
+      newTags?: TagID[]; // List[Tag] maps to an array of TagIDs
+    },
+  ): Promise<{ annotation?: AnnotationID; error?: string }> {
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
+    if (!existingAnnotation) {
+      return { error: "Annotation not found." };
+    }
+    if (existingAnnotation.creator !== user) {
+      return { error: "User is not the creator of this annotation." };
+    }
+
+    const updateDoc: Partial<AnnotationDoc> = {};
+    if (newColor !== undefined) {
+      // Add validation for HTML color if needed, currently assumes input is valid if present
+      updateDoc.color = newColor;
+    }
+    if (newContent !== undefined) {
+      updateDoc.content = newContent;
+    }
+    if (newLocation !== undefined) {
+      updateDoc.location = newLocation;
+    }
+    if (newTags !== undefined) {
+      updateDoc.tags = newTags;
+    }
+
+    if (Object.keys(updateDoc).length === 0) {
+      return { error: "No fields provided for update." };
+    }
+
+    await this.annotations.updateOne(
+      { _id: annotation },
+      { $set: updateDoc },
+    );
+
+    return { annotation };
+  }
+
+  /**
+   * search(user: User, document: Document, criteria: String): (annotations: List[Annotations\])
+   *
+   * **requires** document exists (in Annotation concept's view)
+   *
+   * **effects** returns a list of annotations with creator=user in the document that have content or tags matching criteria
+   *
+   * Queries MUST return an array of dictionaries.
+   */
+  async search(
+    { user, document, criteria }: { user: User; document: Document; criteria: string },
+  ): Promise<{ annotations: AnnotationDoc[] | []; error?: string }> {
+    // Requirement 1: Check if the document (in Annotation concept's view) exists
+    const docView = await this.documentViews.findOne({ _id: document });
+    if (!docView) {
+      // Fix: Include an empty 'annotations' array as required by the return type
+      return { annotations: [], error: "Document not found in Annotation concept's view." };
+    }
+
+    // Find tags that match the criteria for the given user
+    const matchingTags = await this.tags.find({
+      creator: user,
+      title: { $regex: criteria, $options: "i" }, // Case-insensitive regex search
+    }).project({ _id: 1 }).toArray(); // Only retrieve _id for matching
+    const matchingTagIds = matchingTags.map((tag) => tag._id);
+
+    // Build the query to find annotations matching either content or tags
+    const query = {
+      creator: user,
+      document: document,
+      $or: [
+        { content: { $regex: criteria, $options: "i" } }, // Case-insensitive regex search in content
+        { tags: { $in: matchingTagIds } }, // Search by matching tag IDs
+      ],
+    };
+
+    const foundAnnotations = await this.annotations.find(query).toArray();
+
+    return { annotations: foundAnnotations };
+  }
+
+  // --- Utility Actions (not part of concept spec, but needed for setup/testing external entities) ---
+  // A sync would typically call these to populate external generic types
+  async _registerDocument(
+    { documentId, creatorId }: { documentId: Document; creatorId: User },
+  ): Promise<Empty | { error: string }> {
+    const existingDocView = await this.documentViews.findOne({ _id: documentId });
+    if (existingDocView) {
+      return { error: "Document already registered in Annotation concept's view." };
+    }
+    await this.documentViews.insertOne({ _id: documentId, annotations: [], creator: creatorId });
+    return {};
+  }
+
+  async _deleteDocumentView(
+    { documentId }: { documentId: Document },
+  ): Promise<Empty | { error: string }> {
+    const docView = await this.documentViews.findOne({ _id: documentId });
+    if (!docView) {
+      return { error: "Document view not found." };
+    }
+    // Also delete all annotations associated with this document
+    await this.annotations.deleteMany({ document: documentId });
+    await this.documentViews.deleteOne({ _id: documentId });
     return {};
   }
 }

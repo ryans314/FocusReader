@@ -1,3 +1,12 @@
+---
+timestamp: 'Thu Oct 23 2025 06:14:14 GMT-0400 (Eastern Daylight Time)'
+parent: '[[..\20251023_061414.b332f3cc.md]]'
+content_id: 8ab0d5e3ccf32a83050a3dedcf376ba81e33a2c7d92c00f603f322c9ae206638
+---
+
+# file: src/Annotation/AnnotationConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -165,9 +174,7 @@ export default class AnnotationConcept {
   async deleteAnnotation(
     { user, annotation }: { user: User; annotation: AnnotationID },
   ): Promise<Empty | { error: string }> {
-    const existingAnnotation = await this.annotations.findOne({
-      _id: annotation,
-    });
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
     if (!existingAnnotation) {
       return { error: "Annotation not found." };
     }
@@ -210,9 +217,7 @@ export default class AnnotationConcept {
       newTags?: TagID[]; // List[Tag] maps to an array of TagIDs
     },
   ): Promise<{ annotation?: AnnotationID; error?: string }> {
-    const existingAnnotation = await this.annotations.findOne({
-      _id: annotation,
-    });
+    const existingAnnotation = await this.annotations.findOne({ _id: annotation });
     if (!existingAnnotation) {
       return { error: "Annotation not found." };
     }
@@ -257,19 +262,12 @@ export default class AnnotationConcept {
    * Queries MUST return an array of dictionaries.
    */
   async search(
-    { user, document, criteria }: {
-      user: User;
-      document: Document;
-      criteria: string;
-    },
+    { user, document, criteria }: { user: User; document: Document; criteria: string },
   ): Promise<{ annotations: AnnotationDoc[] | []; error?: string }> {
     // Requirement 1: Check if the document (in Annotation concept's view) exists
     const docView = await this.documentViews.findOne({ _id: document });
     if (!docView) {
-      return {
-        annotations: [],
-        error: "Document not found in Annotation concept's view.",
-      };
+      return { annotations: [], error: "Document not found in Annotation concept's view." };
     }
     // NEW: Add authorization check: User must be the creator of the document (in this concept's view)
     if (docView.creator !== user) {
@@ -307,19 +305,11 @@ export default class AnnotationConcept {
   async _registerDocument(
     { documentId, creatorId }: { documentId: Document; creatorId: User },
   ): Promise<Empty | { error: string }> {
-    const existingDocView = await this.documentViews.findOne({
-      _id: documentId,
-    });
+    const existingDocView = await this.documentViews.findOne({ _id: documentId });
     if (existingDocView) {
-      return {
-        error: "Document already registered in Annotation concept's view.",
-      };
+      return { error: "Document already registered in Annotation concept's view." };
     }
-    await this.documentViews.insertOne({
-      _id: documentId,
-      annotations: [],
-      creator: creatorId,
-    });
+    await this.documentViews.insertOne({ _id: documentId, annotations: [], creator: creatorId });
     return {};
   }
 
@@ -336,3 +326,6 @@ export default class AnnotationConcept {
     return {};
   }
 }
+```
+
+***

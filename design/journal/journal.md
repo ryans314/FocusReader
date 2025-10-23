@@ -29,3 +29,4 @@
 		- The LLM INSISTED (many, many times) that Deno.test.beforeEach(fn) runs before each test.step(), which is just objectively not true. 
 		- Even after telling it that it may be wrong, linking to the appropriate deno documentation, it insisted that it was right. 
 	- Why it's interesting
+		- Very firm hallucination, usually after telling it to double check, providing direct evidence of it's incorrectness, the llm "realizes" that it's wrong, and adapts to what I say. 
