@@ -323,6 +323,16 @@ export default class AnnotationConcept {
     return {};
   }
 
+  //Temporary solution to allow front-end sync. Should probably be replaced by a separate Library action called authenticateDocument(User, Document)
+  // Public alias (temporary): expose a non-underscore action so clients can call
+  // POST /api/Annotation/registerDocument without relying on underscore-named methods.
+  // This simply delegates to the internal _registerDocument implementation.
+  registerDocument(
+    { documentId, creatorId }: { documentId: Document; creatorId: User },
+  ): Promise<Empty | { error: string }> {
+    return this._registerDocument({ documentId, creatorId });
+  }
+
   async _deleteDocumentView(
     { documentId }: { documentId: Document },
   ): Promise<Empty | { error: string }> {

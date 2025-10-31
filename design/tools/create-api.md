@@ -243,6 +243,41 @@ Here is the API documentation for the Annotation, FocusStats, Library, Profile, 
 
 ---
 
+### POST /api/Annotation/registerDocument
+
+**Description:** Registers a document in the Annotation concept's view. This is a temporary, unsecured helper so front-end clients (or scripts) can make the Annotation concept aware of a document created elsewhere (for example, by the Library concept) until a backend sync is implemented.
+
+**Requirements:**
+- None (this helper does not perform authentication or additional validation beyond existence in the concept's collection).
+
+**Effects:**
+- Inserts a document view record for the provided document ID and creator ID. If the document is already registered, an error is returned by the current implementation.
+
+**Request Body:**
+
+```json
+{
+  "documentId": "ID",
+  "creatorId": "ID"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 # API Specification: FocusStats Concept
 
 **Purpose:** track and aggregate users' reading statistics
