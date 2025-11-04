@@ -44,4 +44,6 @@
 	- Removed ai augmented search - also done because of time. I'd like to add this back in at some point, but depends on how much time I have to work on the project.
 - Limited application to Ebooks (.epub)
 	- A lot of the application will rely on making changes to text, and it's much, much easier to do with epubs than with pdfs. Frequently, PDFs will essentially be images, with no actual documentation of text. Epubs however have the information about text built in, and are easily able to identify text location and modulate elements of the text (e.g. color, font size, font, etc)
-	- 
+- Removed annotation search - the searching functionality wasn't terribly necessary or in-line with the Focus theme, and was cut for time. 
+- Added Cursor Focus feature - when reading an ebook, users can blur out all text outside a circle around the cursor. Users can set the radius of the circle. This is to help users focus/not get overwhelmed or distracted by other lines of text. (No backend changes necessary for this feature).
+- Backend changes - added a couple API routes for temporary front-end synchronizations, namely the registerDocument route. Will likely be removed after syncs are implemented. 
