@@ -54,13 +54,6 @@
 
 ## Routes thoughts:
 
-- Assume that the following types are "hidden" enough that we don't need to verify the user to access:
-	- Document IDs
-	- Annotation IDs
-	- Library IDs
-	- FocusSession IDs
-- Assume that the following types/actions must be authenticated when performing actions on:
-	- User IDs
 - [x]  /api/Annotation/createTag
 	- REMOVE - not used
 - [x] api/Annotation/createAnnotation
@@ -77,7 +70,7 @@
 	- EXCLUDE - part of createDocument flow
 - [x] api/Annotation/\_deleteDocumentView
 	- EXCLUDE - only used internally (remove?)
-- [ ] api/FocusStats/initUser
+- [x] api/FocusStats/initUser
 	- EXCLUDE - part of createUser sync
 - [ ] api/FocusStats/startSession
 	- EXCLUDE - part of openDocument sync
@@ -89,7 +82,7 @@
 	- INCLUDE - allow anyone to view their own stats
 - [x] api/FocusStats/\_getSessions
 	- INCLUDE - allow anyone to view their own sessions
-- [ ] api/Library/createLibrary
+- [x] api/Library/createLibrary
 	- EXCLUDE - part of createUser sync
 - [x] api/Library/removeDocument
 	- INCLUDE - allow anyone to remove their own documents
@@ -103,19 +96,13 @@
 	- EXCLUDE - part of closeDocument sync
 - [x] api/Library/\_getLibraryByUser
 	- INCLUDE - allow anyone to view their own library
-	- TODO: perhaps exclude since user IDs can be found
 - [x] api/Library/\_getDocumentsInLibrary
 	- INCLUDE - allow anyone to view the documents in their own library
 - [x] api/Library/\_getDocumentDetails
 	- INCLUDE - allow anyone to view their own document details
-%%   -> /api/LikertSurvey/submitResponse
-  -> /api/LikertSurvey/updateResponse
-  -> /api/LikertSurvey/\_getSurveyQuestions
-  -> /api/LikertSurvey/\_getSurveyResponses
-  -> /api/LikertSurvey/\_getRespondentAnswers %%
 - [x] api/Profile/clearCollections
 	- EXCLUDE - internal
-- [ ] api/Profile/createAccount
+- [x] api/Profile/createAccount
 	- EXCLUDE - part of createUser sync
 - [ ] api/Profile/deleteAccount
 	- EXCLUDE - verified user on their own account only
@@ -135,7 +122,7 @@
 	- EXCLUDE - internal (remove?)
 - [x] api/TextSettings/isValidLineHeight
 	- EXCLUDE - internal (remove?)
-- [ ] api/TextSettings/createUserSettings
+- [x] api/TextSettings/createUserSettings
 	- EXCLUDE - part of createUser sync
 - [ ] api/TextSettings/createDocumentSettings
 	- EXCLUDE - part of createDocument sync

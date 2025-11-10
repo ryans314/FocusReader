@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 06:47:16 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_064716.ac706ea3.md]]'
+content_id: 1d85f6f1303bf5e8e9b92fac1945d7f185bab7b342701b968ca57b155f168fd8
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -85,10 +94,6 @@ export const exclusions: Array<string> = [
   "/api/TextSettings/isValidFontSize",
   "/api/TextSettings/isValidLineHeight",
   "/api/TextSettings/_getTextSettings",
-
-  // Create User flow exclusions
-  "/api/Profile/createAccount",
-  "/api/Library/createLibrary",
-  "/api/FocusStats/initUser",
-  "/api/TextSettings/createUserSettings",
 ];
+
+```
