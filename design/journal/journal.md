@@ -47,3 +47,103 @@
 - Removed annotation search - the searching functionality wasn't terribly necessary or in-line with the Focus theme, and was cut for time. 
 - Added Cursor Focus feature - when reading an ebook, users can blur out all text outside a circle around the cursor. Users can set the radius of the circle. This is to help users focus/not get overwhelmed or distracted by other lines of text. (No backend changes necessary for this feature).
 - Backend changes - added a couple API routes for temporary front-end synchronizations, namely the registerDocument route. Will likely be removed after syncs are implemented. 
+
+## Changes in 4b/4c
+- Removed Tags from Annotations
+
+
+## Routes thoughts:
+
+- Assume that the following types are "hidden" enough that we don't need to verify the user to access:
+	- Document IDs
+	- Annotation IDs
+	- Library IDs
+	- FocusSession IDs
+- Assume that the following types/actions must be authenticated when performing actions on:
+	- User IDs
+- [x]  /api/Annotation/createTag
+	- REMOVE - not used
+- [x] api/Annotation/createAnnotation
+	- INCLUDE - allow anyone to create annotations on their own documents
+- [x] api/Annotation/deleteAnnotation
+	- INCLUDE  - allow anyone to delete their own annotations
+- [x] api/Annotation/updateAnnotation
+	- INCLUDE  - allow anyone to update their own annotations
+- [x] api/Annotation/search
+	- INCLUDE - allow anyone to search for the annotations on their own document
+- [ ] api/Annotation/\_registerDocument
+	- REMOVE - Frontend temporary solution
+- [ ] api/Annotation/registerDocument
+	- EXCLUDE - part of createDocument flow
+- [x] api/Annotation/\_deleteDocumentView
+	- EXCLUDE - only used internally (remove?)
+- [ ] api/FocusStats/initUser
+	- EXCLUDE - part of createUser sync
+- [ ] api/FocusStats/startSession
+	- EXCLUDE - part of openDocument sync
+- [ ] api/FocusStats/endSession
+	- EXCLUDE - part of closeDocument sync
+- [x] api/FocusStats/removeSession
+	- INCLUDE - allow anyone to remove their own sessions
+- [x] api/FocusStats/\_viewStats
+	- INCLUDE - allow anyone to view their own stats
+- [x] api/FocusStats/\_getSessions
+	- INCLUDE - allow anyone to view their own sessions
+- [ ] api/Library/createLibrary
+	- EXCLUDE - part of createUser sync
+- [x] api/Library/removeDocument
+	- INCLUDE - allow anyone to remove their own documents
+- [ ] api/Library/createDocument
+	- EXCLUDE - part of createDocument sync
+- [x] api/Library/renameDocument
+	- INCLUDE - allow anyone to rename their own documents
+- [ ] api/Library/openDocument
+	- EXCLUDE - part of openDocument sync
+- [ ] api/Library/closeDocument
+	- EXCLUDE - part of closeDocument sync
+- [x] api/Library/\_getLibraryByUser
+	- INCLUDE - allow anyone to view their own library
+	- TODO: perhaps exclude since user IDs can be found
+- [x] api/Library/\_getDocumentsInLibrary
+	- INCLUDE - allow anyone to view the documents in their own library
+- [x] api/Library/\_getDocumentDetails
+	- INCLUDE - allow anyone to view their own document details
+%%   -> /api/LikertSurvey/submitResponse
+  -> /api/LikertSurvey/updateResponse
+  -> /api/LikertSurvey/\_getSurveyQuestions
+  -> /api/LikertSurvey/\_getSurveyResponses
+  -> /api/LikertSurvey/\_getRespondentAnswers %%
+- [x] api/Profile/clearCollections
+	- EXCLUDE - internal
+- [ ] api/Profile/createAccount
+	- EXCLUDE - part of createUser sync
+- [ ] api/Profile/deleteAccount
+	- EXCLUDE - verified user on their own account only
+- [ ] api/Profile/changePassword
+	- EXCLUDE - verified user on their own account only
+- [x] api/Profile/authenticate
+	- INCLUDE - want anyone to be able to authenticate
+- [ ] api/Profile/\_getUserDetails
+	- EXCLUDE - verified user on their own account only
+- [x] api/Profile/\_getAllUsers
+	- EXCLUDE - Internal only (remove?)
+- [x] api/TextSettings/clearCollections
+	- EXCLUDE - internal only (remove?)
+- [x] api/TextSettings/isValidFont
+	- EXCLUDE - internal (remove?)
+- [x] api/TextSettings/isValidFontSize
+	- EXCLUDE - internal (remove?)
+- [x] api/TextSettings/isValidLineHeight
+	- EXCLUDE - internal (remove?)
+- [ ] api/TextSettings/createUserSettings
+	- EXCLUDE - part of createUser sync
+- [ ] api/TextSettings/createDocumentSettings
+	- EXCLUDE - part of createDocument sync
+- [ ] api/TextSettings/editSettings
+	- EXCLUDE - verified user on their own settings only
+- [x] api/TextSettings/\_getUserDefaultSettings
+	- INCLUDE - query, non-sensitive
+- [x] api/TextSettings/\_getDocumentCurrentSettings
+	- INCLUDE - query, non-sensitive
+- [ ] api/TextSettings/\_getTextSettings
+	- EXCLUDE - internal (remove?)

@@ -31,6 +31,34 @@ export const inclusions: Record<string, string> = {
   "/api/LikertSurvey/_getRespondentAnswers": "answers are visible",
   "/api/LikertSurvey/submitResponse": "allow anyone to submit response",
   "/api/LikertSurvey/updateResponse": "allow anyone to update their response",
+  // Annotation inclusions
+  "/api/Annotation/createAnnotation":
+    "allow anyone to create annotations on their own documents",
+  "/api/Annotation/updateAnnotation":
+    "allow anyone to update their own annotations",
+  "/api/Annotation/deleteAnnotation":
+    "allow anyone to delete their own annotations",
+  "/api/Annotation/search":
+    "allow anyone to search for the annotations on their own document",
+  // FocusStats inclusions
+  "/api/FocusStats/removeSession": "allow anyone to remove their own sessions",
+  "/api/FocusStats/_viewStats": "allow anyone to view their own stats",
+  "/api/FocusStats/_getSessions": "allow anyone to view their own sessions",
+  // Library inclusions
+  "/api/Library/removeDocument": "allow anyone to remove their own documents",
+  "/api/Library/renameDocument": "allow anyone to rename their own documents",
+  "/api/Library/_getLibraryByUser": "allow anyone to view their own library",
+  "/api/Library/_getDocumentsInLibrary":
+    "allow anyone to view the documents in their own library",
+  "/api/Library/_getDocumentDetails":
+    "allow anyone to view their own document details",
+  // Profile inclusions
+  "/api/Profile/authenticate": "want anyone to be able to authenticate",
+  // TextSettings inclusions
+  "/api/TextSettings/_getUserDefaultSettings":
+    "allow anyone to get their own text settings",
+  "/api/TextSettings/_getDocumentCurrentSettings":
+    "allow anyone to get their own document text settings",
 };
 
 /**
@@ -47,4 +75,14 @@ export const exclusions: Array<string> = [
   // Feel free to delete these example exclusions
   "/api/LikertSurvey/createSurvey",
   "/api/LikertSurvey/addQuestion",
+  // Not used by the front end
+  "/api/Annotation/createTag",
+  "/api/Annotation/_deleteDocumentView",
+  "/api/Profile/clearCollections",
+  "/api/Profile/_getAllUsers",
+  "/api/TextSettings/clearCollections",
+  "/api/TextSettings/isValidFont",
+  "/api/TextSettings/isValidFontSize",
+  "/api/TextSettings/isValidLineHeight",
+  "/api/TextSettings/_getTextSettings",
 ];
