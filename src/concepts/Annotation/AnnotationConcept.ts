@@ -307,20 +307,44 @@ export default class AnnotationConcept {
   async _registerDocument(
     { documentId, creatorId }: { documentId: Document; creatorId: User },
   ): Promise<Empty | { error: string }> {
-    const existingDocView = await this.documentViews.findOne({
-      _id: documentId,
-    });
-    if (existingDocView) {
+    console.log(
+      `[AnnotationConcept._registerDocument] Attempting to register document ${documentId} for creator ${creatorId}`,
+    );
+    try {
+      const existingDocView = await this.documentViews.findOne({
+        _id: documentId,
+      });
+      if (existingDocView) {
+        console.error(
+          `[AnnotationConcept._registerDocument] Error: Document ${documentId} already registered in Annotation concept's view.`,
+        );
+        return {
+          error: "Document already registered in Annotation concept's view.",
+        };
+      }
+      console.log(
+        `[AnnotationConcept._registerDocument] Inserting new document view for ${documentId}.`,
+      );
+      await this.documentViews.insertOne({
+        _id: documentId,
+        annotations: [],
+        creator: creatorId,
+      });
+      console.log(
+        `[AnnotationConcept._registerDocument] Document ${documentId} registered successfully.`,
+      );
+      return {};
+    } catch (e) {
+      console.error(
+        `[AnnotationConcept._registerDocument] Unexpected error registering document ${documentId} for creator ${creatorId}:`,
+        e,
+      );
       return {
-        error: "Document already registered in Annotation concept's view.",
+        error: `Failed to register document view: ${
+          e instanceof Error ? e.message : "unknown error"
+        }`,
       };
     }
-    await this.documentViews.insertOne({
-      _id: documentId,
-      annotations: [],
-      creator: creatorId,
-    });
-    return {};
   }
 
   //Temporary solution to allow front-end sync. Should probably be replaced by a separate Library action called authenticateDocument(User, Document)

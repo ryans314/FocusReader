@@ -5,7 +5,6 @@
 
 [@Journal](/design/journal/Journal.md)
 
-[@api.md](/design/background/api.md)
 
 # Syncs
 # Prompt: create a createUser sync. This should call all of the relevant functions (many identified in the "route thoughts:" section of the journal) to create and initialize the user. 
@@ -1949,3 +1948,6 @@ Here are the updated API specifications:
   "error": "string"
 }
 ```
+
+
+# Prompt: 

@@ -75,6 +75,7 @@ export const exclusions: Array<string> = [
   // Feel free to delete these example exclusions
   "/api/LikertSurvey/createSurvey",
   "/api/LikertSurvey/addQuestion",
+
   // Not used by the front end
   "/api/Annotation/createTag",
   "/api/Annotation/_deleteDocumentView",
@@ -91,4 +92,15 @@ export const exclusions: Array<string> = [
   "/api/Library/createLibrary",
   "/api/FocusStats/initUser",
   "/api/TextSettings/createUserSettings",
+
+  // Create Document flow exclusions
+  "/api/Library/createDocument",
+  "/api/Annotation/registerDocument",
+  "/api/TextSettings/createDocumentSettings",
+
+  // Login flow exclusions
+  "/api/Profile/authenticate",
+  "/api/Sessioning/create",
+  "/api/Sessioning/delete",
+  "/api/Sessioning/getUser",
 ];

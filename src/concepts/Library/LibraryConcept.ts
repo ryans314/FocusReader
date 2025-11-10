@@ -14,8 +14,10 @@ type DocumentID = ID; // Renamed to DocumentID to avoid conflict with Collection
  * State: a set of Libraries with:
  *   a user User
  *   a documents set of Documents
+ *
+ * NOTE: The 'export' keyword is added here so we can import this type in our syncs.
  */
-interface LibraryDoc {
+export interface LibraryDoc {
   _id: LibraryID;
   user: User;
   documents: DocumentID[];
@@ -41,17 +43,7 @@ interface DocumentDoc {
  * principle:
  * A user can upload documents (.epub) to their library, view all of their uploaded documents,
  * and remove or open and read any of the documents in their library.
- *
- * Notes:
- * - This concept allows a user to have multiple uploads/documents of the same underlying epubContent/BinaryData,
- *   so long as they are given different names within the same library.
- * - Invariant: There will be no two libraries with the same user.
- * - Invariant: Document names are unique within a single library.
- * - Invariant: Each document, once created, is associated with exactly one library.
- * - epubContent is represented as a BinaryData (string) rather than its own complex type,
- *   as .epub files will likely be interacted with via a library that treats them as their own data type.
  */
-
 export default class LibraryConcept {
   libraries: Collection<LibraryDoc>;
   documents: Collection<DocumentDoc>;
@@ -59,6 +51,14 @@ export default class LibraryConcept {
   constructor(private readonly db: Db) {
     this.libraries = this.db.collection(PREFIX + "libraries");
     this.documents = this.db.collection(PREFIX + "documents");
+
+    console.log(`[LibraryConcept.constructor] Initialized collections:`);
+    console.log(
+      `[LibraryConcept.constructor]   - Libraries: ${this.libraries.collectionName}`,
+    );
+    console.log(
+      `[LibraryConcept.constructor]   - Documents: ${this.documents.collectionName}`,
+    );
   }
 
   /**
@@ -71,7 +71,6 @@ export default class LibraryConcept {
   async createLibrary(
     { user }: { user: User },
   ): Promise<{ library?: LibraryID; error?: string }> {
-    // Check precondition: user is not already associated with a library
     const existingLibrary = await this.libraries.findOne({ user });
     if (existingLibrary) {
       return { error: `User ${user} already has a library.` };
@@ -98,24 +97,20 @@ export default class LibraryConcept {
   async removeDocument(
     { library, document }: { library: LibraryID; document: DocumentID },
   ): Promise<Empty | { error: string }> {
-    // Check precondition: library exists
     const existingLibrary = await this.libraries.findOne({ _id: library });
     if (!existingLibrary) {
       return { error: `Library ${library} does not exist.` };
     }
 
-    // Check precondition: document is in library
     if (!existingLibrary.documents.includes(document)) {
       return { error: `Document ${document} is not in library ${library}.` };
     }
 
-    // Effect: remove document from the library's documents set
     await this.libraries.updateOne(
       { _id: library },
       { $pull: { documents: document } },
     );
 
-    // Effect: remove document from the documents collection
     await this.documents.deleteOne({ _id: document });
 
     return {};
@@ -135,43 +130,68 @@ export default class LibraryConcept {
       library: LibraryID;
     },
   ): Promise<{ document?: DocumentID; error?: string }> {
-    // Check precondition: library exists
-    const existingLibrary = await this.libraries.findOne({ _id: library });
-    if (!existingLibrary) {
-      return { error: `Library ${library} does not exist.` };
-    }
+    console.log(
+      `[LibraryConcept.createDocument] Attempting to create document '${name}' in library ${library}`,
+    );
+    try {
+      const existingLibrary = await this.libraries.findOne({ _id: library });
+      if (!existingLibrary) {
+        console.error(
+          `[LibraryConcept.createDocument] Error: Library ${library} does not exist.`,
+        );
+        return { error: `Library ${library} does not exist.` };
+      }
 
-    // Check precondition: a document with name does not already exist in the given library
-    // Query for documents whose IDs are in the library's document list AND have the given name.
-    const nameExistsInLibrary = await this.documents.findOne({
-      _id: { $in: existingLibrary.documents },
-      name: name,
-    });
+      const nameExistsInLibrary = await this.documents.findOne({
+        _id: { $in: existingLibrary.documents },
+        name: name,
+      });
 
-    if (nameExistsInLibrary) {
+      if (nameExistsInLibrary) {
+        console.error(
+          `[LibraryConcept.createDocument] Error: Document with name '${name}' already exists in library ${library}.`,
+        );
+        return {
+          error:
+            `Document with name '${name}' already exists in library ${library}.`,
+        };
+      }
+
+      const newDocumentId = freshID() as DocumentID;
+      const newDocument: DocumentDoc = {
+        _id: newDocumentId,
+        name,
+        epubContent,
+      };
+
+      console.log(
+        `[LibraryConcept.createDocument] Inserting new document record: ${newDocumentId}`,
+      );
+      await this.documents.insertOne(newDocument);
+      console.log(
+        `[LibraryConcept.createDocument] Document record inserted. Updating library ${library}.`,
+      );
+
+      await this.libraries.updateOne(
+        { _id: library },
+        { $push: { documents: newDocumentId } },
+      );
+      console.log(
+        `[LibraryConcept.createDocument] Library ${library} updated with new document.`,
+      );
+
+      return { document: newDocumentId };
+    } catch (e) {
+      console.error(
+        `[LibraryConcept.createDocument] Unexpected error creating document '${name}' for library ${library}:`,
+        e,
+      );
       return {
-        error:
-          `Document with name '${name}' already exists in library ${library}.`,
+        error: `Failed to create document: ${
+          e instanceof Error ? e.message : "unknown error"
+        }`,
       };
     }
-
-    const newDocumentId = freshID() as DocumentID;
-    const newDocument: DocumentDoc = {
-      _id: newDocumentId,
-      name,
-      epubContent,
-    };
-
-    // Effect: creates a new Document
-    await this.documents.insertOne(newDocument);
-
-    // Effect: adds it to library's documents set
-    await this.libraries.updateOne(
-      { _id: library },
-      { $push: { documents: newDocumentId } },
-    );
-
-    return { document: newDocumentId };
   }
 
   /**
@@ -189,26 +209,22 @@ export default class LibraryConcept {
       document: DocumentID;
     },
   ): Promise<{ document?: DocumentID; error?: string }> {
-    // Check precondition: document exists
     const existingDocument = await this.documents.findOne({ _id: document });
     if (!existingDocument) {
       return { error: `Document ${document} does not exist.` };
     }
 
-    // Find the library owned by the user
     const userLibrary = await this.libraries.findOne({ user });
     if (!userLibrary) {
       return { error: `User ${user} does not have a library.` };
     }
 
-    // Check precondition: document is associated with user's library
     if (!userLibrary.documents.includes(document)) {
       return {
         error: `Document ${document} is not in user ${user}'s library.`,
       };
     }
 
-    // Check precondition: newName is not the name of an existing document in this library (excluding the document itself)
     const nameExistsInLibrary = await this.documents.findOne({
       _id: { $in: userLibrary.documents, $ne: document }, // documents in library, but not the current document
       name: newName,
@@ -221,7 +237,6 @@ export default class LibraryConcept {
       };
     }
 
-    // Effect: changes document's name to newName
     await this.documents.updateOne(
       { _id: document },
       { $set: { name: newName } },
@@ -236,19 +251,15 @@ export default class LibraryConcept {
    * **requires** user is in a library with `document`
    *
    * **effects** confirms the document is accessible to the user; returns the document's ID.
-   *            (Note: The concept state does not explicitly track an "open" status,
-   *             so this action primarily serves to validate access for the user.)
    */
   async openDocument(
     { user, document }: { user: User; document: DocumentID },
   ): Promise<{ document?: DocumentID; error?: string }> {
-    // Find the library owned by the user
     const userLibrary = await this.libraries.findOne({ user });
     if (!userLibrary) {
       return { error: `User ${user} does not have a library.` };
     }
 
-    // Check precondition: document exists and is in user's library
     const docExists = await this.documents.findOne({ _id: document });
     if (!docExists || !userLibrary.documents.includes(document)) {
       return {
@@ -257,8 +268,6 @@ export default class LibraryConcept {
       };
     }
 
-    // As no state for "open" is defined, the effect is implicit confirmation of access.
-    // In a full application, this might trigger content loading, logging, etc.
     return { document: document };
   }
 
@@ -268,19 +277,15 @@ export default class LibraryConcept {
    * **requires** user is in a library with `document`
    *
    * **effects** confirms the document is no longer actively being accessed by the user; returns the document's ID.
-   *            (Note: Similar to `openDocument`, this action primarily validates user-document association
-   *             as no specific "close" state is defined in the concept.)
    */
   async closeDocument(
     { user, document }: { user: User; document: DocumentID },
   ): Promise<{ document?: DocumentID; error?: string }> {
-    // Find the library owned by the user
     const userLibrary = await this.libraries.findOne({ user });
     if (!userLibrary) {
       return { error: `User ${user} does not have a library.` };
     }
 
-    // Check precondition: document exists and is in user's library
     const docExists = await this.documents.findOne({ _id: document });
     if (!docExists || !userLibrary.documents.includes(document)) {
       return {
@@ -289,7 +294,6 @@ export default class LibraryConcept {
       };
     }
 
-    // As no state for "close" is defined, the effect is implicit confirmation of closure.
     return { document: document };
   }
 
@@ -305,10 +309,23 @@ export default class LibraryConcept {
   async _getLibraryByUser(
     { user }: { user: User },
   ): Promise<{ library?: LibraryDoc; error?: string }[]> {
+    console.log(
+      `[LibraryConcept._getLibraryByUser] Attempting to find library for user: ${user}`,
+    );
     const library = await this.libraries.findOne({ user });
+    console.log(
+      `[LibraryConcept._getLibraryByUser] findOne for user '${user}' completed. Found library: ${!!library}`,
+    );
+
     if (!library) {
+      console.log(
+        `[LibraryConcept._getLibraryByUser] No library found for user ${user}.`,
+      );
       return [{ error: `No library found for user ${user}.` }];
     }
+    console.log(
+      `[LibraryConcept._getLibraryByUser] Successfully retrieved library for user: ${user}`,
+    );
     return [{ library: library }];
   }
 

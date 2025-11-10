@@ -11,5 +11,7 @@
 
 [@RequestingConcept](/src/concepts/Requesting/RequestingConcept.ts)
 
+[@SessioningConcept](/src/concepts/Sessioning/SessioningConcept.ts)
+
 [@passthrough](/src/concepts/Requesting/passthrough.ts)
 

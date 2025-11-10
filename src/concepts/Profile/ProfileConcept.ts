@@ -147,13 +147,37 @@ export default class ProfileConcept {
   async authenticate(
     { username, password }: { username: string; password: string },
   ): Promise<{ user: User } | { error: string }> {
+    // --- ADDED LOGS FOR DEBUGGING ---
+    console.log(
+      `[ProfileConcept.authenticate] Attempting to authenticate user: '${username}'`,
+    );
     const userDoc = await this.users.findOne({ username });
+    console.log(
+      `[ProfileConcept.authenticate] findOne for user '${username}' completed. Found userDoc: ${!!userDoc}`,
+    );
 
-    if (!userDoc || !(await compare(password, userDoc.passwordHash))) {
+    if (!userDoc) { // User not found, or DB query failed to find it
+      console.log(
+        `[ProfileConcept.authenticate] User '${username}' not found in DB.`,
+      );
       return { error: "Invalid username or password." };
     }
 
+    // Now attempt to compare password if userDoc was found
+    const isPasswordCorrect = await compare(password, userDoc.passwordHash);
+    console.log(
+      `[ProfileConcept.authenticate] Password comparison result for '${username}': ${isPasswordCorrect}`,
+    );
+
+    if (!isPasswordCorrect) {
+      return { error: "Invalid username or password." };
+    }
+
+    console.log(
+      `[ProfileConcept.authenticate] Authentication successful for user: '${username}'`,
+    );
     return { user: userDoc._id };
+    // --- END LOGS ---
   }
 
   /**

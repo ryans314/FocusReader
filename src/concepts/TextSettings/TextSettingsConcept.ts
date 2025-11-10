@@ -189,52 +189,77 @@ export default class TextSettingsConcept {
       document: Document;
     },
   ): Promise<{ settings: ID } | { error: string }> {
-    // Requires checks
-    if (!this.isValidFont(font)) {
-      return { error: "Invalid font string." };
-    }
-    if (!this.isValidFontSize(fontSize)) {
-      return { error: "Font size must be a positive number." };
-    }
-    if (!this.isValidLineHeight(lineHeight, fontSize)) {
-      return {
-        error: "Line height must be greater than or equal to font size.",
-      };
-    }
-
-    const existingCurrent = await this.documentCurrentsCollection.findOne({
-      _id: document,
-    });
-    if (existingCurrent) {
-      return {
-        error: `Document ${document} already has current text settings.`,
-      };
-    }
-
-    // Effects
-    const newSettingsId = freshID();
-    const newSettings: TextSettingsData = {
-      _id: newSettingsId,
-      font,
-      fontSize,
-      lineHeight,
-    };
-
+    console.log(
+      `[TextSettingsConcept.createDocumentSettings] Attempting to create settings for document ${document}`,
+    );
     try {
+      // Requires checks
+      if (!this.isValidFont(font)) {
+        console.error(
+          "[TextSettingsConcept.createDocumentSettings] Error: Invalid font string.",
+        );
+        return { error: "Invalid font string." };
+      }
+      if (!this.isValidFontSize(fontSize)) {
+        console.error(
+          "[TextSettingsConcept.createDocumentSettings] Error: Font size must be a positive number.",
+        );
+        return { error: "Font size must be a positive number." };
+      }
+      if (!this.isValidLineHeight(lineHeight, fontSize)) {
+        console.error(
+          "[TextSettingsConcept.createDocumentSettings] Error: Line height must be >= font size.",
+        );
+        return {
+          error: "Line height must be greater than or equal to font size.",
+        };
+      }
+
+      const existingCurrent = await this.documentCurrentsCollection.findOne({
+        _id: document,
+      });
+      if (existingCurrent) {
+        console.error(
+          `[TextSettingsConcept.createDocumentSettings] Error: Document ${document} already has current text settings.`,
+        );
+        return {
+          error: `Document ${document} already has current text settings.`,
+        };
+      }
+
+      const newSettingsId = freshID();
+      const newSettings: TextSettingsData = {
+        _id: newSettingsId,
+        font,
+        fontSize,
+        lineHeight,
+      };
+
+      console.log(
+        `[TextSettingsConcept.createDocumentSettings] Inserting new text settings record: ${newSettingsId}`,
+      );
       await this.textSettingsCollection.insertOne(newSettings);
+      console.log(
+        `[TextSettingsConcept.createDocumentSettings] Text settings record inserted. Updating document currents for ${document}.`,
+      );
+
       await this.documentCurrentsCollection.insertOne({
         _id: document,
         currentTextSettingsId: newSettingsId,
       });
+      console.log(
+        `[TextSettingsConcept.createDocumentSettings] Document ${document} current settings updated.`,
+      );
+
       return { settings: newSettingsId };
     } catch (e) {
       console.error("Error creating document settings:", e);
       return {
-        error: "Failed to create document settings due to database error.",
+        error: "Failed to create document settings due to database error." +
+          (e instanceof Error ? `: ${e.message}` : ""),
       };
     }
   }
-
   /**
    * editSettings(textSettings: ID, font: String, fontSize: Number, lineHeight: Number): Empty | {error: string}
    *

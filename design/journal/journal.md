@@ -67,7 +67,7 @@
 - [ ] api/Annotation/\_registerDocument
 	- REMOVE - Frontend temporary solution
 - [ ] api/Annotation/registerDocument
-	- EXCLUDE - part of createDocument flow
+	- EXCLUDE - part of createDocument sync
 - [x] api/Annotation/\_deleteDocumentView
 	- EXCLUDE - only used internally (remove?)
 - [x] api/FocusStats/initUser
