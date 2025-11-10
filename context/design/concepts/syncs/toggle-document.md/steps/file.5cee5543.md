@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 15:56:29 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_155629.f504415c.md]]'
+content_id: 5cee55433a6437ea72b4c31e67dcfb6d1e2ac5e6e5869b11ed661dc672c57e5f
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -23,8 +32,7 @@ type FocusStatsID = ID;
  *   a startTime Datetime
  *   an optional endTime Datetime
  */
-// FINAL FIX: The 'export' keyword is added here to make the type available for import.
-export interface FocusSessionDocument {
+export interface FocusSessionDocument { // NOTE: Added 'export'
   _id: FocusSessionID;
   user: User;
   document: Document;
@@ -277,3 +285,12 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+```
+
+### 2. Fixes for `focus.sync.ts`
+
+With the concept now returning the correct type, we can fix the sync itself. The changes are:
+
+1. In `StartFocusOnOpen`, add a more robust filter to ensure the library document was successfully queried before trying to extract its ID.
+2. The `frames.query` call in `EndFocusOnClose` now type-checks correctly.
+3. In `EndFocusOnClose`, the `then` clause was incorrectly wrapped in an `actions()` helper. A `then` clause can be a function that returns an `ActionList` directly. This has been corrected.

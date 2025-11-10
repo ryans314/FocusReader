@@ -1,3 +1,13 @@
+---
+timestamp: 'Mon Nov 10 2025 15:52:35 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_155235.8e71e4e4.md]]'
+content_id: dab9083785e048ea7f74502d7729d1ff82965708ecb706e504b5720d500ccf7a
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
+// file: src/concepts/FocusStats/FocusStatsConcept.ts
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -23,8 +33,7 @@ type FocusStatsID = ID;
  *   a startTime Datetime
  *   an optional endTime Datetime
  */
-// FINAL FIX: The 'export' keyword is added here to make the type available for import.
-export interface FocusSessionDocument {
+export interface FocusSessionDocument { // NOTE: Added 'export'
   _id: FocusSessionID;
   user: User;
   document: Document;
@@ -220,10 +229,10 @@ export default class FocusStatsConcept {
   async _viewStats(
     input: { user: User },
   ): Promise<
-    Array<
-      | { focusStats: Omit<FocusStatsDocument, "_id"> & { id: FocusStatsID } }
-      | { error: string }
-    >
+    | Array<{
+        focusStats: Omit<FocusStatsDocument, "_id"> & { id: FocusStatsID };
+      }>
+    | Array<{ error: string }> // BUG FIX: Signature updated to return Array of errors
   > {
     const { user } = input;
 
@@ -231,6 +240,7 @@ export default class FocusStatsConcept {
     const userFocusStats = await this.focusStatsCollection.findOne({ user });
 
     if (!userFocusStats) {
+      // BUG FIX: Return array with error object, not a plain object
       return [{ error: `FocusStats not found for user ${user}.` }];
     }
 
@@ -256,13 +266,15 @@ export default class FocusStatsConcept {
   async _getSessions(
     input: { user: User },
   ): Promise<
-    Array<{ focusSession: FocusSessionDocument } | { error: string }>
+    | Array<{ focusSession: FocusSessionDocument }>
+    | Array<{ error: string }> // BUG FIX: Signature updated to return Array of errors
   > {
     const { user } = input;
 
     // Precondition: Check if the user has FocusStats initialized, to ensure they are a valid user
     const userFocusStats = await this.focusStatsCollection.findOne({ user });
     if (!userFocusStats) {
+      // BUG FIX: Return array with error object, not a plain object
       return [{
         error:
           `FocusStats not found for user ${user}. Cannot retrieve sessions.`,
@@ -277,3 +289,8 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+```
+
+### 2. Fixes for `focus.sync.ts`
+
+With the concept queries fixed, we can now correct the synchronization logic.

@@ -64,9 +64,9 @@
 	- INCLUDE  - allow anyone to update their own annotations
 - [x] api/Annotation/search
 	- INCLUDE - allow anyone to search for the annotations on their own document
-- [ ] api/Annotation/\_registerDocument
+- [x] api/Annotation/\_registerDocument
 	- REMOVE - Frontend temporary solution
-- [ ] api/Annotation/registerDocument
+- [x] api/Annotation/registerDocument
 	- EXCLUDE - part of createDocument sync
 - [x] api/Annotation/\_deleteDocumentView
 	- EXCLUDE - only used internally (remove?)
@@ -86,7 +86,7 @@
 	- EXCLUDE - part of createUser sync
 - [x] api/Library/removeDocument
 	- INCLUDE - allow anyone to remove their own documents
-- [ ] api/Library/createDocument
+- [x] api/Library/createDocument
 	- EXCLUDE - part of createDocument sync
 - [x] api/Library/renameDocument
 	- INCLUDE - allow anyone to rename their own documents
@@ -124,7 +124,7 @@
 	- EXCLUDE - internal (remove?)
 - [x] api/TextSettings/createUserSettings
 	- EXCLUDE - part of createUser sync
-- [ ] api/TextSettings/createDocumentSettings
+- [x] api/TextSettings/createDocumentSettings
 	- EXCLUDE - part of createDocument sync
 - [ ] api/TextSettings/editSettings
 	- EXCLUDE - verified user on their own settings only
@@ -132,5 +132,5 @@
 	- INCLUDE - query, non-sensitive
 - [x] api/TextSettings/\_getDocumentCurrentSettings
 	- INCLUDE - query, non-sensitive
-- [ ] api/TextSettings/\_getTextSettings
+- [x] api/TextSettings/\_getTextSettings
 	- EXCLUDE - internal (remove?)

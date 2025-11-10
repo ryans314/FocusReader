@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 16:07:52 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_160752.f3d9cb69.md]]'
+content_id: 85814ac542156b7a4667b6fdb172aef3ad9b3e841d838cf75391889c9572b8fc
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -23,7 +32,7 @@ type FocusStatsID = ID;
  *   a startTime Datetime
  *   an optional endTime Datetime
  */
-// FINAL FIX: The 'export' keyword is added here to make the type available for import.
+// BUG FIX: Add the 'export' keyword here so other modules can import this type.
 export interface FocusSessionDocument {
   _id: FocusSessionID;
   user: User;
@@ -277,3 +286,6 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+```
+
+After making this one-word change in `src/concepts/FocusStats/FocusStatsConcept.ts`, the import error in `src/syncs/focus.sync.ts` will be resolved. You shouldn't need to change the import statement itself.

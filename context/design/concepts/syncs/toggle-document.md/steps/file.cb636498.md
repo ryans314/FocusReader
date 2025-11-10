@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 15:46:27 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_154627.a474098b.md]]'
+content_id: cb63649874899065ca47a1b25d4a4b556cc201e284105c20598508c937b9cc11
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -103,10 +112,6 @@ export const exclusions: Array<string> = [
   "/api/Sessioning/create",
   "/api/Sessioning/delete",
   "/api/Sessioning/getUser",
-
-  // document open and close exclusions
-  "/api/Library/openDocument",
-  "/api/Library/closeDocument",
-  "/api/FocusStats/startSession",
-  "/api/FocusStats/endSession",
 ];
+
+```

@@ -1,3 +1,13 @@
+---
+timestamp: 'Mon Nov 10 2025 15:46:27 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_154627.a474098b.md]]'
+content_id: 21421ec06403d5f8e88c365afc4196217a0aea6019334e88f016153a4fd59960
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
+// file: src/concepts/FocusStats/FocusStatsConcept.ts
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -23,8 +33,7 @@ type FocusStatsID = ID;
  *   a startTime Datetime
  *   an optional endTime Datetime
  */
-// FINAL FIX: The 'export' keyword is added here to make the type available for import.
-export interface FocusSessionDocument {
+interface FocusSessionDocument {
   _id: FocusSessionID;
   user: User;
   document: Document;
@@ -220,10 +229,9 @@ export default class FocusStatsConcept {
   async _viewStats(
     input: { user: User },
   ): Promise<
-    Array<
-      | { focusStats: Omit<FocusStatsDocument, "_id"> & { id: FocusStatsID } }
-      | { error: string }
-    >
+    Array<{
+      focusStats: Omit<FocusStatsDocument, "_id"> & { id: FocusStatsID };
+    }> | { error: string }
   > {
     const { user } = input;
 
@@ -231,7 +239,7 @@ export default class FocusStatsConcept {
     const userFocusStats = await this.focusStatsCollection.findOne({ user });
 
     if (!userFocusStats) {
-      return [{ error: `FocusStats not found for user ${user}.` }];
+      return { error: `FocusStats not found for user ${user}.` };
     }
 
     // Transform _id to id as per typical API response patterns for clarity and consistency
@@ -256,17 +264,17 @@ export default class FocusStatsConcept {
   async _getSessions(
     input: { user: User },
   ): Promise<
-    Array<{ focusSession: FocusSessionDocument } | { error: string }>
+    Array<{ focusSession: FocusSessionDocument }> | { error: string }
   > {
     const { user } = input;
 
     // Precondition: Check if the user has FocusStats initialized, to ensure they are a valid user
     const userFocusStats = await this.focusStatsCollection.findOne({ user });
     if (!userFocusStats) {
-      return [{
+      return {
         error:
           `FocusStats not found for user ${user}. Cannot retrieve sessions.`,
-      }];
+      };
     }
 
     // Retrieve all focus session documents for this user
@@ -277,3 +285,5 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+
+```

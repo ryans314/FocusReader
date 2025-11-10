@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 15:59:06 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_155906.26be95bf.md]]'
+content_id: cbb6ff10b15045edc7bd9e6a70fae979d9c054c64f986e004b6c0303fef9a8e9
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -23,8 +32,7 @@ type FocusStatsID = ID;
  *   a startTime Datetime
  *   an optional endTime Datetime
  */
-// FINAL FIX: The 'export' keyword is added here to make the type available for import.
-export interface FocusSessionDocument {
+export interface FocusSessionDocument { // NOTE: Added 'export'
   _id: FocusSessionID;
   user: User;
   document: Document;
@@ -277,3 +285,5 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+
+```

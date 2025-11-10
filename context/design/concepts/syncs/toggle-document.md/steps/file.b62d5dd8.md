@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 16:11:23 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_161123.e1c7c9a5.md]]'
+content_id: b62d5dd8e60aa5dacd473f505a5325c72c4efc6f398c86b73e7c7d94e8168488
+---
+
+# file: src/concepts/FocusStats/FocusStatsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -277,3 +286,5 @@ export default class FocusStatsConcept {
     return sessions.map((session) => ({ focusSession: session }));
   }
 }
+
+```

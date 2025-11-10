@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 16:23:15 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_162315.145d26dd.md]]'
+content_id: 953388d3cfe37fade9cbf25d3c5dcedcde9d5248e7aa9b629e74c588db5b7abb
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -110,3 +119,5 @@ export const exclusions: Array<string> = [
   "/api/FocusStats/startSession",
   "/api/FocusStats/endSession",
 ];
+
+```
