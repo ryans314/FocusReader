@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 17:01:04 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_170104.403e3cdb.md]]'
+content_id: 953388d3cfe37fade9cbf25d3c5dcedcde9d5248e7aa9b629e74c588db5b7abb
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -41,11 +50,11 @@ export const inclusions: Record<string, string> = {
   "/api/Annotation/search":
     "allow anyone to search for the annotations on their own document",
   // FocusStats inclusions
-  // "/api/FocusStats/removeSession": "allow anyone to remove their own sessions",
-  // "/api/FocusStats/_viewStats": "allow anyone to view their own stats",
-  // "/api/FocusStats/_getSessions": "allow anyone to view their own sessions",
+  "/api/FocusStats/removeSession": "allow anyone to remove their own sessions",
+  "/api/FocusStats/_viewStats": "allow anyone to view their own stats",
+  "/api/FocusStats/_getSessions": "allow anyone to view their own sessions",
   // Library inclusions
-  // "/api/Library/removeDocument": "allow anyone to remove their own documents",
+  "/api/Library/removeDocument": "allow anyone to remove their own documents",
   "/api/Library/renameDocument": "allow anyone to rename their own documents",
   "/api/Library/_getLibraryByUser": "allow anyone to view their own library",
   "/api/Library/_getDocumentsInLibrary":
@@ -109,13 +118,6 @@ export const exclusions: Array<string> = [
   "/api/Library/closeDocument",
   "/api/FocusStats/startSession",
   "/api/FocusStats/endSession",
-
-  // Verification Required exclusions
-  "/api/FocusStats/removeSession",
-  "/api/FocusStats/_viewStats",
-  "/api/FocusStats/_getSessions",
-  "/api/Library/removeDocument",
-  "/api/Profile/deleteAccount",
-  "/api/Profile/changePassword",
-  "/api/Profile/_getUserDetails",
 ];
+
+```

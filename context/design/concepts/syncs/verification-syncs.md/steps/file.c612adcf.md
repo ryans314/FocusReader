@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 10 2025 17:01:04 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251110_170104.403e3cdb.md]]'
+content_id: c612adcfc51770a0e03eac57d437655bbe435e3748c85c088d00ac939ece18dc
+---
+
+# file: src/concepts/Profile/ProfileConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -181,7 +190,7 @@ export default class ProfileConcept {
   }
 
   /**
-   * _getUserDetails(user: User): Array<{ username: String } | { error: string }>
+   * _getUserDetails(user: User): Array<{ username: String }>
    *
    * **requires** user exists
    *
@@ -190,10 +199,10 @@ export default class ProfileConcept {
    */
   async _getUserDetails(
     { user }: { user: User },
-  ): Promise<Array<{ username: string } | { error: string }>> { // Return type is always an array
+  ): Promise<Array<{ username: string }> | { error: string }> {
     const userDoc = await this.users.findOne({ _id: user });
     if (!userDoc) {
-      return [{ error: `User '${user}' not found.` }]; // FIX: Return error inside an array
+      return { error: `User '${user}' not found.` };
     }
     return [{ username: userDoc.username }];
   }
@@ -210,3 +219,5 @@ export default class ProfileConcept {
     return userDocs.map((u) => ({ id: u._id, username: u.username }));
   }
 }
+
+```

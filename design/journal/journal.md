@@ -72,27 +72,27 @@
 	- EXCLUDE - only used internally (remove?)
 - [x] api/FocusStats/initUser
 	- EXCLUDE - part of createUser sync
-- [ ] api/FocusStats/startSession
+- [x] api/FocusStats/startSession
 	- EXCLUDE - part of openDocument sync
-- [ ] api/FocusStats/endSession
+- [x] api/FocusStats/endSession
 	- EXCLUDE - part of closeDocument sync
-- [x] api/FocusStats/removeSession
-	- INCLUDE - allow anyone to remove their own sessions
-- [x] api/FocusStats/\_viewStats
-	- INCLUDE - allow anyone to view their own stats
-- [x] api/FocusStats/\_getSessions
-	- INCLUDE - allow anyone to view their own sessions
+- [ ] api/FocusStats/removeSession
+	- EXCLUDE - verified user for their own sessions only
+- [ ] api/FocusStats/\_viewStats
+	- EXCLUDE - verified user for their own stats only
+- [ ] api/FocusStats/\_getSessions
+	- EXCLUDE - verified user for their own sessions only
 - [x] api/Library/createLibrary
 	- EXCLUDE - part of createUser sync
-- [x] api/Library/removeDocument
-	- INCLUDE - allow anyone to remove their own documents
+- [ ] api/Library/removeDocument
+	- EXCLUDE - verified users for their own documents only
 - [x] api/Library/createDocument
 	- EXCLUDE - part of createDocument sync
 - [x] api/Library/renameDocument
 	- INCLUDE - allow anyone to rename their own documents
-- [ ] api/Library/openDocument
+- [x] api/Library/openDocument
 	- EXCLUDE - part of openDocument sync
-- [ ] api/Library/closeDocument
+- [x] api/Library/closeDocument
 	- EXCLUDE - part of closeDocument sync
 - [x] api/Library/\_getLibraryByUser
 	- INCLUDE - allow anyone to view their own library
