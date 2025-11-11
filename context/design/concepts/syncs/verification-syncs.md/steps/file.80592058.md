@@ -1,3 +1,12 @@
+---
+timestamp: 'Tue Nov 11 2025 01:05:28 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251111_010528.4a020826.md]]'
+content_id: 805920581ee9171f69475b4d963ab9f199a2d43fe13bb934b805e2f280471c30
+---
+
+# file: src/syncs/verification.sync.ts
+
+```typescript
 import { actions, Frames, Sync } from "@engine";
 import {
   FocusStats,
@@ -90,6 +99,8 @@ export const RemoveDocumentRequest: Sync = (
       { library },
     );
 
+    // FIX: The filter now correctly checks for the existence of the library object,
+    // and the map accesses its properties directly.
     return frames
       .filter(($) => $[library]) // Check if the library object was found and bound
       .map(($) => {
@@ -102,6 +113,7 @@ export const RemoveDocumentRequest: Sync = (
     { library: libraryId, document },
   ]),
 });
+
 export const RemoveDocumentResponse: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Library/removeDocument" }, { request }],
@@ -153,7 +165,6 @@ export const RemoveSessionError: Sync = ({ request, error }) => ({
 
 // Profile._getUserDetails
 export const GetUserDetailsRequest: Sync = (
-  // FIX: Changed variable from 'details' to 'username' for clarity.
   { request, session, user, username },
 ) => ({
   when: actions([
@@ -163,16 +174,13 @@ export const GetUserDetailsRequest: Sync = (
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning.getUser, { session }, { user });
-    // The query returns `[{ username: '...' }]`. We alias the `username` property
-    // from the result to our `username` variable in the frame.
     frames = await frames.query(
       Profile._getUserDetails,
       { user },
-      { username }, // Shorthand for { username: username }
+      { username },
     );
     return frames;
   },
-  // FIX: Respond with the `username` variable, which creates a `{"username": "..."}` object.
   then: actions([Requesting.respond, { request, username }]),
 });
 
@@ -185,14 +193,11 @@ export const ViewStatsRequest: Sync = ({ request, session, user, stats }) => ({
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning.getUser, { session }, { user });
-    // The query returns `[{ focusStats: {...} }]`. We alias `focusStats` to `stats`.
-    // The frame now contains the raw stats object bound to the `stats` variable.
     frames = await frames.query(FocusStats._viewStats, { user }, {
       focusStats: stats,
     });
     return frames;
   },
-  // The 'then' clause uses the 'stats' variable directly.
   then: actions([Requesting.respond, { request, stats }]),
 });
 
@@ -216,10 +221,9 @@ export const GetSessionsRequest: Sync = (
       return new Frames({ ...originalFrame, [sessions]: [] });
     }
 
-    // Manually map the results to create a flat array of session objects.
     const allSessions = frames.map(($) => $[sessionData]);
-    // Return a new single frame with the final, correctly formatted array.
     return new Frames({ ...originalFrame, [sessions]: allSessions });
   },
   then: actions([Requesting.respond, { request, sessions }]),
 });
+```

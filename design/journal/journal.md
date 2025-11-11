@@ -76,15 +76,15 @@
 	- EXCLUDE - part of openDocument sync
 - [x] api/FocusStats/endSession
 	- EXCLUDE - part of closeDocument sync
-- [ ] api/FocusStats/removeSession
+- [x] api/FocusStats/removeSession
 	- EXCLUDE - verified user for their own sessions only
-- [ ] api/FocusStats/\_viewStats
+- [x] api/FocusStats/\_viewStats
 	- EXCLUDE - verified user for their own stats only
-- [ ] api/FocusStats/\_getSessions
+- [x] api/FocusStats/\_getSessions
 	- EXCLUDE - verified user for their own sessions only
 - [x] api/Library/createLibrary
 	- EXCLUDE - part of createUser sync
-- [ ] api/Library/removeDocument
+- [x] api/Library/removeDocument
 	- EXCLUDE - verified users for their own documents only
 - [x] api/Library/createDocument
 	- EXCLUDE - part of createDocument sync
@@ -104,13 +104,13 @@
 	- EXCLUDE - internal
 - [x] api/Profile/createAccount
 	- EXCLUDE - part of createUser sync
-- [ ] api/Profile/deleteAccount
+- [x] api/Profile/deleteAccount
 	- EXCLUDE - verified user on their own account only
-- [ ] api/Profile/changePassword
+- [x] api/Profile/changePassword
 	- EXCLUDE - verified user on their own account only
 - [x] api/Profile/authenticate
 	- INCLUDE - want anyone to be able to authenticate
-- [ ] api/Profile/\_getUserDetails
+- [x] api/Profile/\_getUserDetails
 	- EXCLUDE - verified user on their own account only
 - [x] api/Profile/\_getAllUsers
 	- EXCLUDE - Internal only (remove?)
@@ -126,8 +126,8 @@
 	- EXCLUDE - part of createUser sync
 - [x] api/TextSettings/createDocumentSettings
 	- EXCLUDE - part of createDocument sync
-- [ ] api/TextSettings/editSettings
-	- EXCLUDE - verified user on their own settings only
+- [x] api/TextSettings/editSettings
+	- INCLUDE - allow anyone to edit their own settings
 - [x] api/TextSettings/\_getUserDefaultSettings
 	- INCLUDE - query, non-sensitive
 - [x] api/TextSettings/\_getDocumentCurrentSettings

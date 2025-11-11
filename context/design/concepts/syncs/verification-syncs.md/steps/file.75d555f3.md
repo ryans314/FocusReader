@@ -1,3 +1,12 @@
+---
+timestamp: 'Tue Nov 11 2025 01:00:52 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251111_010052.aa757fb1.md]]'
+content_id: 75d555f3f7f63f954608913a1fdb1cc26f7fa374c7a67725fd415ca6253b3825
+---
+
+# file: src/concepts/Library/LibraryConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -301,11 +310,14 @@ export default class LibraryConcept {
   async _getLibraryByUser(
     { user }: { user: User },
   ): Promise<{ library?: LibraryDoc; error?: string }[]> {
+    console.log("starting _getLibraryByUser for user:", user);
     const library = await this.libraries.findOne({ user });
 
     if (!library) {
+      console.log("error in _getLibraryByUser for user:", user);
       return [{ error: `No library found for user ${user}.` }];
     }
+    console.log("success in _getLibraryByUser for user:", user);
     return [{ library: library }];
   }
 
@@ -347,3 +359,5 @@ export default class LibraryConcept {
     return [{ document: doc }];
   }
 }
+
+```

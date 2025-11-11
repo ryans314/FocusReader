@@ -1,3 +1,12 @@
+---
+timestamp: 'Tue Nov 11 2025 01:01:32 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251111_010132.527e5c9a.md]]'
+content_id: 0c457379b109c2578f6e3c94b66eaec929dee4d93ed8fbbf9d3b1f35226ded87
+---
+
+# file: src/syncs/verification.sync.ts
+
+```typescript
 import { actions, Frames, Sync } from "@engine";
 import {
   FocusStats,
@@ -83,18 +92,18 @@ export const RemoveDocumentRequest: Sync = (
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning.getUser, { session }, { user });
-    // This query binds the LibraryDoc object directly to the 'library' variable.
-    frames = await frames.query(
-      Library._getLibraryByUser,
-      { user },
-      { library },
-    );
+    // This query binds the object `{ library: LibraryDoc }` to the 'library' variable.
+    frames = await frames.query(Library._getLibraryByUser, { user }, { library });
 
+    // FIX: The filter now correctly checks for an object with an inner 'library' property.
     return frames
-      .filter(($) => $[library]) // Check if the library object was found and bound
+      .filter(
+        ($) => $[library] && ($[library] as any).library,
+      )
       .map(($) => {
-        const lib = $[library] as any; // $[library] is the LibraryDoc object
-        return { ...$, [libraryId]: lib._id }; // Extract the ID
+        // We now correctly access the inner library document.
+        const lib = ($[library] as any).library;
+        return { ...$, [libraryId]: lib._id };
       });
   },
   then: actions([
@@ -102,6 +111,7 @@ export const RemoveDocumentRequest: Sync = (
     { library: libraryId, document },
   ]),
 });
+
 export const RemoveDocumentResponse: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Library/removeDocument" }, { request }],
@@ -153,7 +163,6 @@ export const RemoveSessionError: Sync = ({ request, error }) => ({
 
 // Profile._getUserDetails
 export const GetUserDetailsRequest: Sync = (
-  // FIX: Changed variable from 'details' to 'username' for clarity.
   { request, session, user, username },
 ) => ({
   when: actions([
@@ -163,16 +172,13 @@ export const GetUserDetailsRequest: Sync = (
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning.getUser, { session }, { user });
-    // The query returns `[{ username: '...' }]`. We alias the `username` property
-    // from the result to our `username` variable in the frame.
     frames = await frames.query(
       Profile._getUserDetails,
       { user },
-      { username }, // Shorthand for { username: username }
+      { username },
     );
     return frames;
   },
-  // FIX: Respond with the `username` variable, which creates a `{"username": "..."}` object.
   then: actions([Requesting.respond, { request, username }]),
 });
 
@@ -185,14 +191,11 @@ export const ViewStatsRequest: Sync = ({ request, session, user, stats }) => ({
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning.getUser, { session }, { user });
-    // The query returns `[{ focusStats: {...} }]`. We alias `focusStats` to `stats`.
-    // The frame now contains the raw stats object bound to the `stats` variable.
     frames = await frames.query(FocusStats._viewStats, { user }, {
       focusStats: stats,
     });
     return frames;
   },
-  // The 'then' clause uses the 'stats' variable directly.
   then: actions([Requesting.respond, { request, stats }]),
 });
 
@@ -216,10 +219,9 @@ export const GetSessionsRequest: Sync = (
       return new Frames({ ...originalFrame, [sessions]: [] });
     }
 
-    // Manually map the results to create a flat array of session objects.
     const allSessions = frames.map(($) => $[sessionData]);
-    // Return a new single frame with the final, correctly formatted array.
     return new Frames({ ...originalFrame, [sessions]: allSessions });
   },
   then: actions([Requesting.respond, { request, sessions }]),
 });
+```

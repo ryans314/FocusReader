@@ -3260,3 +3260,630 @@ Here is the updated API documentation for the three query endpoints. This now ac
     }
     ```
 *   **Note:** If the user has no sessions, the response will be `{"sessions": []}`.
+
+
+# Prompt: There seems to be a bug in the RemoveDocumentRequest sync, where the where clause is returning an empty frame (which then causes the then clause to not execute). Below is the code and console output for it:
+
+```typescript
+// Library.removeDocument
+
+export const RemoveDocumentRequest: Sync = (
+
+  { request, session, user, document, library, libraryId },
+
+) => ({
+
+  when: actions([
+
+    Requesting.request,
+
+    { path: "/Library/removeDocument", session, document },
+
+    { request },
+
+  ]),
+
+  where: async (frames) => {
+
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+
+    frames = await frames.query(Library._getLibraryByUser, { user }, {
+
+      library,
+
+    });
+
+  
+
+    const result = frames
+
+      .filter(
+
+        ($) =>
+
+          Array.isArray($[library]) && $[library].length > 0 &&
+
+          ($[library] as any)[0].library,
+
+      )
+
+      .map(($) => {
+
+        const lib = ($[library] as any)[0].library;
+
+        return { ...$, [libraryId]: lib._id };
+
+      });
+
+    console.log("returning from where in RemoveDocumentRequest:", result);
+
+    return result;
+
+  },
+
+  then: actions([
+
+    Library.removeDocument,
+
+    { library: libraryId, document },
+
+  ]),
+
+});
+```
+
+```
+[Requesting] Received request for path: /Library/removeDocument
+
+Requesting.request {
+  session: '019a6ffd-688f-782d-9c1a-bd767b5104c2',
+  document: '019a7011-aa7a-731d-9dc1-758c06dc0b13',
+  path: '/Library/removeDocument'
+} => { request: '019a717c-baef-70b4-8d8f-6ec3377adfd6' }
+
+
+Sessioning.getUser { session: '019a6ffd-688f-782d-9c1a-bd767b5104c2' } => [ { user: '019a6ffd-6680-716f-bc12-805373273757' } ]        
+
+starting _getLibraryByUser for user: 019a6ffd-6680-716f-bc12-805373273757
+success in _getLibraryByUser for user: 019a6ffd-6680-716f-bc12-805373273757
+returning from where in RemoveDocumentRequest: Frames(0) []
+[Requesting] Error processing request: Request 019a717c-baef-70b4-8d8f-6ec3377adfd6 timed out after 10000ms
+```
+# response:
+
+You have found the bug! My sincerest apologies for the error-prone code. Your console log is the perfect piece of evidence. The fact that `_getLibraryByUser` logs "success" but the `where` clause returns an empty `Frames` object tells us the problem is precisely in the `.filter()` and `.map()` logic.
+
+Thank you for your excellent debugging and for providing the logs. Let me repeat your prompt and provide a definitive fix.
+
+**Prompt:** There seems to be a bug in the `RemoveDocumentRequest` sync, where the `where` clause is returning an empty frame (which then causes the `then` clause to not execute). Below is the code and console output for it.
+
+***
+
+### Analysis and Final Fix
+
+You are absolutely correct. The bug is in this line of the filter:
+
+`Array.isArray($[library])`
+
+Let's trace the data flow to see why this is wrong:
+
+1.  `Library._getLibraryByUser` returns a `Promise` that resolves to an array, for example: `[{ library: { _id: "lib123", ... } }]`.
+2.  The sync engine's `.query()` method iterates over this array. Since there's only one item, it creates one new frame.
+3.  Inside this frame, it binds the item from the array — the object `{ library: { _id: "lib123", ... } }` — to the `library` variable.
+4.  Therefore, inside the `filter`, the value of `$[library]` is an **object**, not an array.
+5.  `Array.isArray($[library])` is `false`, the filter condition fails, and no frames are passed to the `.map()`. The `where` clause correctly returns `Frames(0) []`.
+
+The fix is to adjust the `filter` to correctly check the shape of the object that is actually bound to the `library` variable. We need to check that the `library` variable exists and that it has an inner `library` property.
+
+I have corrected this logic in the `verification.sync.ts` file below.
+
+***
+
+# file: src/syncs/verification.sync.ts
+
+```typescript
+import { actions, Frames, Sync } from "@engine";
+import {
+  FocusStats,
+  Library,
+  Profile,
+  Requesting,
+  Sessioning,
+} from "@concepts";
+
+/**
+ * This file implements the "guard" or "policy enforcer" pattern for actions
+ * that were excluded from passthrough and require user authentication via a session.
+ */
+
+// --- Profile Concept Actions ---
+
+// Profile.deleteAccount
+export const DeleteAccountRequest: Sync = ({ request, session, user }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/deleteAccount", session },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([Profile.deleteAccount, { user }]),
+});
+
+export const DeleteAccountResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/deleteAccount" }, { request }],
+    [Profile.deleteAccount, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const DeleteAccountError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/deleteAccount" }, { request }],
+    [Profile.deleteAccount, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// Profile.changePassword
+export const ChangePasswordRequest: Sync = (
+  { request, session, user, oldPassword, newPassword },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/changePassword", session, oldPassword, newPassword },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([Profile.changePassword, { user, oldPassword, newPassword }]),
+});
+
+export const ChangePasswordResponse: Sync = ({ request, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/changePassword" }, { request }],
+    [Profile.changePassword, {}, { user }],
+  ),
+  then: actions([Requesting.respond, { request, user }]),
+});
+
+export const ChangePasswordError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/changePassword" }, { request }],
+    [Profile.changePassword, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- Library Concept Actions ---
+
+// Library.removeDocument
+export const RemoveDocumentRequest: Sync = (
+  { request, session, user, document, library, libraryId },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Library/removeDocument", session, document },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    // This query binds the object `{ library: LibraryDoc }` to the 'library' variable.
+    frames = await frames.query(Library._getLibraryByUser, { user }, { library });
+
+    // FIX: The filter now correctly checks for an object with an inner 'library' property.
+    return frames
+      .filter(
+        ($) => $[library] && ($[library] as any).library,
+      )
+      .map(($) => {
+        // We now correctly access the inner library document.
+        const lib = ($[library] as any).library;
+        return { ...$, [libraryId]: lib._id };
+      });
+  },
+  then: actions([
+    Library.removeDocument,
+    { library: libraryId, document },
+  ]),
+});
+
+export const RemoveDocumentResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Library/removeDocument" }, { request }],
+    [Library.removeDocument, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RemoveDocumentError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Library/removeDocument" }, { request }],
+    [Library.removeDocument, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- FocusStats Concept Actions ---
+
+// FocusStats.removeSession
+export const RemoveSessionRequest: Sync = (
+  { request, session, user, focusSession },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/removeSession", session, focusSession },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([FocusStats.removeSession, { focusSession }]),
+});
+
+export const RemoveSessionResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/FocusStats/removeSession" }, { request }],
+    [FocusStats.removeSession, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RemoveSessionError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/FocusStats/removeSession" }, { request }],
+    [FocusStats.removeSession, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- Verified Queries ---
+
+// Profile._getUserDetails
+export const GetUserDetailsRequest: Sync = (
+  { request, session, user, username },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/_getUserDetails", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(
+      Profile._getUserDetails,
+      { user },
+      { username },
+    );
+    return frames;
+  },
+  then: actions([Requesting.respond, { request, username }]),
+});
+
+// FocusStats._viewStats
+export const ViewStatsRequest: Sync = ({ request, session, user, stats }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/_viewStats", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(FocusStats._viewStats, { user }, {
+      focusStats: stats,
+    });
+    return frames;
+  },
+  then: actions([Requesting.respond, { request, stats }]),
+});
+
+// FocusStats._getSessions
+export const GetSessionsRequest: Sync = (
+  { request, session, user, sessionData, sessions },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/_getSessions", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(FocusStats._getSessions, { user }, {
+      focusSession: sessionData,
+    });
+
+    if (frames.length === 0) {
+      return new Frames({ ...originalFrame, [sessions]: [] });
+    }
+
+    const allSessions = frames.map(($) => $[sessionData]);
+    return new Frames({ ...originalFrame, [sessions]: allSessions });
+  },
+  then: actions([Requesting.respond, { request, sessions }]),
+});
+```
+
+# Prompt: the frames are empty after the filtering, but not before the filtering. Here are the before and after values. Please fix this.
+
+```
+RemoveDocumentRequest frames before filtering: Frames(1) [
+  {
+    [Symbol(flow)]: "fe14a7a0-ca72-4628-aae7-8962821577d3",        
+    [Symbol(session)]: "019a6ffd-688f-782d-9c1a-bd767b5104c2",     
+    [Symbol(document)]: "019a7011-aa7a-731d-9dc1-758c06dc0b13",    
+    [Symbol(request)]: "019a7183-7a17-783f-9b17-77fd05b8f384",     
+    [Symbol(action_0)]: "4a563cb9-98cf-4cd1-876d-e01c99ce0642",    
+    [Symbol(user)]: "019a6ffd-6680-716f-bc12-805373273757",        
+    [Symbol(library)]: {
+      _id: "019a6ffd-66aa-7ef9-9128-5d47466dc1f0",
+      user: "019a6ffd-6680-716f-bc12-805373273757",
+      documents: [
+        "019a6ffd-9c5d-722a-864f-4bd8375bed1d",
+        "019a7011-aa7a-731d-9dc1-758c06dc0b13"
+      ]
+    }
+  }
+]
+RemoveDocumentRequest authorized frames: Frames(0) []
+```
+# response:
+
+You have absolutely found the bug. My sincerest apologies for the error-prone code. Your console log is the perfect piece of evidence. The fact that the frame has the library data *before* the filter, but is empty *after*, tells us the problem is precisely in the `.filter()` and `.map()` logic itself.
+
+Thank you for your excellent debugging and for providing the logs. Let me repeat your prompt and provide a definitive fix.
+
+**Prompt:** The frames are empty after the filtering, but not before the filtering. Here are the before and after values. Please fix this.
+
+***
+
+### Analysis and Final Fix
+
+You are absolutely correct, and the log is the key. Let's look at the structure of the frame *before* filtering:
+
+```json
+{
+  "[Symbol(library)]": {
+    "_id": "...",
+    "user": "...",
+    "documents": [ ... ]
+  }
+}
+```
+
+This tells us that the variable `$[library]` holds the **library document object itself**.
+
+Now let's look at my incorrect filter:
+`($) => $[library] && ($[library] as any).library`
+
+This code checks if `$[library]` exists (which it does), and then it tries to access a property named `.library` **on the library object**. The library object has `_id`, `user`, and `documents` properties, but it does not have a nested property called `library`. Therefore, `($[library] as any).library` is `undefined`, the filter condition fails, and the frame is discarded.
+
+The fix is to simplify the filter and map to correctly handle the actual data structure.
+
+1.  The **filter** only needs to check that the `library` variable was successfully bound: `($) => $[library]`.
+2.  The **map** can then access the `_id` directly from the library object: `const lib = $[library]; return { ...$, [libraryId]: lib._id };`
+
+I have corrected this logic in the `verification.sync.ts` file below.
+
+***
+
+# file: src/syncs/verification.sync.ts
+
+```typescript
+import { actions, Frames, Sync } from "@engine";
+import {
+  FocusStats,
+  Library,
+  Profile,
+  Requesting,
+  Sessioning,
+} from "@concepts";
+
+/**
+ * This file implements the "guard" or "policy enforcer" pattern for actions
+ * that were excluded from passthrough and require user authentication via a session.
+ */
+
+// --- Profile Concept Actions ---
+
+// Profile.deleteAccount
+export const DeleteAccountRequest: Sync = ({ request, session, user }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/deleteAccount", session },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([Profile.deleteAccount, { user }]),
+});
+
+export const DeleteAccountResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/deleteAccount" }, { request }],
+    [Profile.deleteAccount, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const DeleteAccountError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/deleteAccount" }, { request }],
+    [Profile.deleteAccount, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// Profile.changePassword
+export const ChangePasswordRequest: Sync = (
+  { request, session, user, oldPassword, newPassword },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/changePassword", session, oldPassword, newPassword },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([Profile.changePassword, { user, oldPassword, newPassword }]),
+});
+
+export const ChangePasswordResponse: Sync = ({ request, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/changePassword" }, { request }],
+    [Profile.changePassword, {}, { user }],
+  ),
+  then: actions([Requesting.respond, { request, user }]),
+});
+
+export const ChangePasswordError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Profile/changePassword" }, { request }],
+    [Profile.changePassword, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- Library Concept Actions ---
+
+// Library.removeDocument
+export const RemoveDocumentRequest: Sync = (
+  { request, session, user, document, library, libraryId },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Library/removeDocument", session, document },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    // This query binds the LibraryDoc object directly to the 'library' variable.
+    frames = await frames.query(
+      Library._getLibraryByUser,
+      { user },
+      { library },
+    );
+
+    // FIX: The filter now correctly checks for the existence of the library object,
+    // and the map accesses its properties directly.
+    return frames
+      .filter(($) => $[library]) // Check if the library object was found and bound
+      .map(($) => {
+        const lib = $[library] as any; // $[library] is the LibraryDoc object
+        return { ...$, [libraryId]: lib._id }; // Extract the ID
+      });
+  },
+  then: actions([
+    Library.removeDocument,
+    { library: libraryId, document },
+  ]),
+});
+
+export const RemoveDocumentResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Library/removeDocument" }, { request }],
+    [Library.removeDocument, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RemoveDocumentError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Library/removeDocument" }, { request }],
+    [Library.removeDocument, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- FocusStats Concept Actions ---
+
+// FocusStats.removeSession
+export const RemoveSessionRequest: Sync = (
+  { request, session, user, focusSession },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/removeSession", session, focusSession },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning.getUser, { session }, { user }),
+  then: actions([FocusStats.removeSession, { focusSession }]),
+});
+
+export const RemoveSessionResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/FocusStats/removeSession" }, { request }],
+    [FocusStats.removeSession, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RemoveSessionError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/FocusStats/removeSession" }, { request }],
+    [FocusStats.removeSession, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- Verified Queries ---
+
+// Profile._getUserDetails
+export const GetUserDetailsRequest: Sync = (
+  { request, session, user, username },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Profile/_getUserDetails", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(
+      Profile._getUserDetails,
+      { user },
+      { username },
+    );
+    return frames;
+  },
+  then: actions([Requesting.respond, { request, username }]),
+});
+
+// FocusStats._viewStats
+export const ViewStatsRequest: Sync = ({ request, session, user, stats }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/_viewStats", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(FocusStats._viewStats, { user }, {
+      focusStats: stats,
+    });
+    return frames;
+  },
+  then: actions([Requesting.respond, { request, stats }]),
+});
+
+// FocusStats._getSessions
+export const GetSessionsRequest: Sync = (
+  { request, session, user, sessionData, sessions },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/FocusStats/_getSessions", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning.getUser, { session }, { user });
+    frames = await frames.query(FocusStats._getSessions, { user }, {
+      focusSession: sessionData,
+    });
+
+    if (frames.length === 0) {
+      return new Frames({ ...originalFrame, [sessions]: [] });
+    }
+
+    const allSessions = frames.map(($) => $[sessionData]);
+    return new Frames({ ...originalFrame, [sessions]: allSessions });
+  },
+  then: actions([Requesting.respond, { request, sessions }]),
+});
+```

@@ -9,16 +9,6 @@ import {
 } from "@concepts";
 import { ID } from "@utils/types.ts";
 
-// --- DEBUGGING AUTH SYNC (STARTUP) logs are good, keep them ---
-console.log("--- DEBUGGING AUTH SYNC (STARTUP) ---");
-console.log("Sessioning concept imported:", !!Sessioning);
-console.log(
-  "Sessioning.create is a function:",
-  typeof Sessioning.create === "function",
-);
-console.log("--- END DEBUGGING AUTH SYNC (STARTUP) ---");
-// --- END LOGS ---
-
 // --- Login Flow ---
 
 /**

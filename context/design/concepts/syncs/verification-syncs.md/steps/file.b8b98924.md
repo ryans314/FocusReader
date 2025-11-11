@@ -1,3 +1,12 @@
+---
+timestamp: 'Tue Nov 11 2025 01:00:52 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251111_010052.aa757fb1.md]]'
+content_id: b8b989241eaf8410cc9ec8bd96ccf02a856f30908abf8aea4655cbb06d63541c
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -122,3 +131,5 @@ export const exclusions: Array<string> = [
   "/api/Profile/changePassword",
   "/api/Profile/_getUserDetails",
 ];
+
+```

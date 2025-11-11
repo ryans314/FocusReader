@@ -189,9 +189,6 @@ export default class TextSettingsConcept {
       document: Document;
     },
   ): Promise<{ settings: ID } | { error: string }> {
-    console.log(
-      `[TextSettingsConcept.createDocumentSettings] Attempting to create settings for document ${document}`,
-    );
     try {
       // Requires checks
       if (!this.isValidFont(font)) {
@@ -235,21 +232,11 @@ export default class TextSettingsConcept {
         lineHeight,
       };
 
-      console.log(
-        `[TextSettingsConcept.createDocumentSettings] Inserting new text settings record: ${newSettingsId}`,
-      );
       await this.textSettingsCollection.insertOne(newSettings);
-      console.log(
-        `[TextSettingsConcept.createDocumentSettings] Text settings record inserted. Updating document currents for ${document}.`,
-      );
-
       await this.documentCurrentsCollection.insertOne({
         _id: document,
         currentTextSettingsId: newSettingsId,
       });
-      console.log(
-        `[TextSettingsConcept.createDocumentSettings] Document ${document} current settings updated.`,
-      );
 
       return { settings: newSettingsId };
     } catch (e) {
